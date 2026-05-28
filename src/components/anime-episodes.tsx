@@ -120,14 +120,13 @@ const AnimeEpisodes = ({ animeId }: Props) => {
           </div>
         </div>
       </div>
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-9 w-full gap-3 content-center">
+      <div className="grid lg:grid-cols-5 grid-cols-4 sm:grid-cols-5 md:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-9 w-full gap-5 content-center">
         {episodes.map((episode, idx) => (
           <EpisodeCard
             episode={episode}
             key={idx}
             className="self-center justify-self-center"
             animeId={animeId}
-            showCard={true}
           />
         ))}
         {!episodes.length && !isLoading && (

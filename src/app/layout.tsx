@@ -120,7 +120,7 @@ export default function RootLayout({
         >
           <QueryProvider>
             <NavBar />
-            <div className="pt-[72px]">
+            <div>
               {children}
             </div>
             <Footer />
