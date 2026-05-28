@@ -20,7 +20,7 @@ const geistSans = localFont({
 
 const APP_NAME = "TopUpie Anime";
 const APP_DEFAULT_TITLE = "TopUpie Anime - Watch Free Anime Online in HD";
-const APP_DESCRIPTION = "Aniwave - Watch Free Anime Online in HD Quality. Stream anime free in HD with sub & dub options. Browse thousands of titles by genre, year, studio, and more. No ads, no bullshit.";
+const APP_DESCRIPTION = "TopUpie - Watch Free Anime Online in HD Quality. Stream anime free in HD with sub & dub options. Browse thousands of titles by genre, year, studio, and more. No ads, no bullshit.";
 const APP_KEYWORDS = ["free anime website", "watch anime online free", "anime streaming", "anime online hd", "sub and dub anime", "free anime no ads", "best free anime website", "anime website online", "anime streaming free hd", "watch anime free"];
 
 export const viewport: Viewport = {
