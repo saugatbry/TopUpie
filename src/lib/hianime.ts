@@ -16,19 +16,10 @@ let proxyFetchEnabled = false;
 // within the same serverless function warm instance
 const episodeCountCache = new Map<string, number>();
 
-async function doFetch(url: string, useProxy = false, proxyUrl?: string | null): Promise<Response> {
+async function doFetch(url: string, _useProxy = false, _proxyUrl?: string | null): Promise<Response> {
   const headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
   };
-  if (useProxy && proxyUrl) {
-    try {
-      const { fetch: uFetch, ProxyAgent: PAgent } = await import("undici");
-      const agent = new PAgent(proxyUrl);
-      return await uFetch(url, { headers, dispatcher: agent, signal: AbortSignal.timeout(10000) }) as unknown as Response;
-    } catch {
-      // proxy failed, fall back to direct fetch
-    }
-  }
   return fetch(url, { headers, signal: AbortSignal.timeout(15000) });
 }
 
@@ -583,24 +574,17 @@ export const hianime = {
   },
 
   async getEpisodes(id: string) {
-    try {
-      const cachedCount = episodeCountCache.get(id);
-      if (cachedCount !== undefined) {
-        const episodes: any[] = [];
-        for (let i = 1; i <= cachedCount; i++) {
-          episodes.push({
-            number: i,
-            episodeId: `${id}-${i}`,
-            title: `Episode ${i}`,
-            isFiller: false,
-          });
-        }
-        return { totalEpisodes: cachedCount, episodes };
-      }
+    const EP_CACHE_KEY = `episodes:${id}`;
 
+    const fromCache = await getCached(EP_CACHE_KEY, 86400);
+    if (fromCache) {
+      episodeCountCache.set(id, fromCache.totalEpisodes);
+      return fromCache;
+    }
+
+    try {
       const preSeeded = getPreSeededEpisodeCount(id);
       if (preSeeded !== null) {
-        episodeCountCache.set(id, preSeeded);
         const episodes: any[] = [];
         for (let i = 1; i <= preSeeded; i++) {
           episodes.push({
@@ -610,7 +594,10 @@ export const hianime = {
             isFiller: false,
           });
         }
-        return { totalEpisodes: preSeeded, episodes };
+        const result = { totalEpisodes: preSeeded, episodes };
+        episodeCountCache.set(id, preSeeded);
+        await setCache(EP_CACHE_KEY, result);
+        return result;
       }
 
       const fetchWithRetry = async (url: string) => {
@@ -652,18 +639,31 @@ export const hianime = {
         fetchWithRetry(`${JIKAN_API}/anime/${id}`).catch(() => ({ data: { episodes: 0 } })),
       ]);
 
-      const totalEpisodes = animeInfo.data?.episodes || 0;
-      const existingEpisodes: any[] = firstPage.data || [];
+      const totalEpisodesJikan = animeInfo.data?.episodes;
+      const totalPages = firstPage.pagination?.last_visible_page || 1;
 
-      const episodeMap = new Map<number, any>();
-      for (const ep of existingEpisodes) {
-        const epNum = parseInt(ep.mal_id, 10) || parseInt(ep.episode, 10) || 0;
-        if (epNum > 0) {
-          episodeMap.set(epNum, ep);
+      let allData = firstPage.data || [];
+
+      if (totalPages > 1) {
+        const pageUrls: string[] = [];
+        for (let p = 2; p <= totalPages; p++) {
+          pageUrls.push(`${JIKAN_API}/anime/${id}/episodes?page=${p}`);
+        }
+        const results = await fetchAllWithConcurrency(pageUrls, 3);
+        for (const page of results) {
+          allData = allData.concat(page.data || []);
         }
       }
 
-      const count = totalEpisodes > 0 ? totalEpisodes : Math.max(existingEpisodes.length, firstPage.pagination?.items?.total || 0);
+      const count = (totalEpisodesJikan && totalEpisodesJikan > 0)
+        ? totalEpisodesJikan
+        : Math.max(allData.length, firstPage.pagination?.items?.total || allData.length);
+
+      const episodeMap = new Map<number, any>();
+      for (const ep of allData) {
+        const epNum = parseInt(ep.mal_id, 10) || parseInt(ep.episode, 10) || 0;
+        if (epNum > 0) episodeMap.set(epNum, ep);
+      }
 
       const episodes: any[] = [];
       for (let i = 1; i <= count; i++) {
@@ -685,8 +685,12 @@ export const hianime = {
         }
       }
 
-      if (count > 0) episodeCountCache.set(id, count);
-      return { totalEpisodes: count, episodes };
+      const result = { totalEpisodes: count, episodes };
+      if (count > 0) {
+        episodeCountCache.set(id, count);
+        await setCache(EP_CACHE_KEY, result);
+      }
+      return result;
     } catch (error) {
       console.error("Error fetching episodes:", error);
       return { totalEpisodes: 0, episodes: [] };

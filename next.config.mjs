@@ -45,6 +45,12 @@ const nextConfig = {
         { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
       ],
     },
+    {
+      source: "/api/:path*",
+      headers: [
+        { key: "Cache-Control", value: "public, max-age=0, s-maxage=60, stale-while-revalidate=600" },
+      ],
+    },
   ],
 };
 
