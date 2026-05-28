@@ -1,11 +1,23 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import ContinueWatching from "@/components/continue-watching";
 import FeaturedCollection from "@/components/featured-collection";
 import HeroSection from "@/components/hero-section";
 import LatestEpisodesAnime from "@/components/latest-episodes-section";
-import AnimeSchedule from "@/components/anime-schedule";
 import AnimeSections from "@/components/anime-sections";
+
+const AnimeSchedule = dynamic(() => import("@/components/anime-schedule"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex flex-col gap-5 py-10 items-center lg:items-start px-4">
+      <div className="h-10 w-[7rem] animate-pulse bg-slate-700 rounded"></div>
+      <div className="h-14 w-full animate-pulse bg-slate-700 rounded"></div>
+      <div className="h-14 w-full animate-pulse bg-slate-700 rounded"></div>
+      <div className="h-14 w-full animate-pulse bg-slate-700 rounded"></div>
+    </div>
+  ),
+});
 import { useGetHomePageData } from "@/query/get-home-page-data";
 import { IAnime, LatestCompletedAnime, SpotlightAnime } from "@/types/anime";
 
@@ -30,7 +42,7 @@ export default function Home() {
   const hasData = data && data.spotlightAnimes && data.spotlightAnimes.length > 0;
 
   return (
-    <div className="flex flex-col bg-[#121212]">
+    <>
       <HeroSection
         spotlightAnime={(data?.spotlightAnimes ?? []) as SpotlightAnime[]}
         isDataLoading={isLoading}
@@ -81,6 +93,6 @@ export default function Home() {
           <p className="text-gray-400">No anime data available right now. Please try again later.</p>
         </div>
       )}
-    </div>
+    </>
   );
 }

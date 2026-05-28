@@ -108,10 +108,11 @@ function LoginPopoverButton() {
               Signup
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="login" className="flex flex-col gap-2">
+          <TabsContent value="login" className="flex flex-col gap-2" aria-label="Login form">
             <div className="mt-2">
-              <p className="text-gray-300 text-xs">Username:</p>
+              <label htmlFor="login-username" className="text-gray-300 text-xs">Username:</label>
               <Input
+                id="login-username"
                 required
                 onChange={(e) =>
                   setFormData({ ...formData, username: e.target.value })
@@ -122,8 +123,9 @@ function LoginPopoverButton() {
               />
             </div>
             <div>
-              <p className="text-gray-300 text-xs">Password:</p>
+              <label htmlFor="login-password" className="text-gray-300 text-xs">Password:</label>
               <Input
+                id="login-password"
                 required
                 type="password"
                 value={formData.password}
@@ -143,10 +145,11 @@ function LoginPopoverButton() {
               Login
             </Button>
           </TabsContent>
-          <TabsContent value="signup" className="flex flex-col gap-2">
+          <TabsContent value="signup" className="flex flex-col gap-2" aria-label="Signup form">
             <div>
-              <p className="text-gray-300 text-xs">Username:</p>
+              <label htmlFor="signup-username" className="text-gray-300 text-xs">Username:</label>
               <Input
+                id="signup-username"
                 required
                 onChange={(e) =>
                   setFormData({ ...formData, username: e.target.value })
@@ -156,8 +159,9 @@ function LoginPopoverButton() {
               />
             </div>
             <div>
-              <p className="text-gray-300 text-xs">Email:</p>
+              <label htmlFor="signup-email" className="text-gray-300 text-xs">Email:</label>
               <Input
+                id="signup-email"
                 required
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
@@ -167,8 +171,9 @@ function LoginPopoverButton() {
               />
             </div>
             <div>
-              <p className="text-gray-300 text-xs">Password:</p>
+              <label htmlFor="signup-password" className="text-gray-300 text-xs">Password:</label>
               <Input
+                id="signup-password"
                 required
                 onChange={(e) =>
                   setFormData({ ...formData, password: e.target.value })

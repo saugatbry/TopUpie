@@ -45,11 +45,9 @@ const NavBar = () => {
     <nav
       className={cn([
         "h-fit w-full",
-        "sticky top-0 z-[100] duration-300",
-        "bg-gradient-to-b from-slate-700",
-        isHeaderSticky
-          ? "bg-clip-padding backdrop-filter backdrop-blur-md bg-opacity-10 bg-slate-900"
-          : "",
+        "sticky top-0 z-[100]",
+        "bg-slate-950/80 backdrop-blur-xl border-b border-white/5",
+        isHeaderSticky ? "shadow-lg shadow-black/20" : "",
       ])}
       aria-label="Main navigation"
     >
@@ -57,7 +55,7 @@ const NavBar = () => {
         <Link
           href={ROUTES.HOME}
           className="flex items-center gap-1 cursor-pointer shrink-0"
-          aria-label="Home page"
+          aria-label="TopUpie Anime - Home"
         >
           <Image src="https://i.ibb.co/kCDz26G/image-removebg-preview.png" alt="TopUpie Anime logo" width={50} height={50} className="md:w-[70px] md:h-[70px]" />
           <span
@@ -82,10 +80,10 @@ const NavBar = () => {
           {auth.auth ? <NavbarAvatar auth={auth} /> : <LoginPopoverButton />}
         </div>
         <div className="lg:hidden flex items-center gap-2">
-          <button onClick={() => setMobileSearchOpen(!mobileSearchOpen)} aria-label="Toggle search">
+          <button onClick={() => setMobileSearchOpen(!mobileSearchOpen)} aria-label={mobileSearchOpen ? "Close search" : "Open search"} aria-expanded={mobileSearchOpen}>
             <SearchIcon suppressHydrationWarning className="h-5 w-5" />
           </button>
-          <MobileMenuSheet trigger={<MenuIcon suppressHydrationWarning />} />
+          <MobileMenuSheet trigger={<MenuIcon suppressHydrationWarning aria-label="Open menu" />} />
           {auth.auth ? <NavbarAvatar auth={auth} /> : <LoginPopoverButton />}
         </div>
       </Container>
@@ -110,7 +108,7 @@ const MobileMenuSheet = ({ trigger }: { trigger: ReactNode }) => {
         onCloseAutoFocus={(e) => e.preventDefault()}
       >
         <div className="w-full h-full relative">
-          <SheetClose className="absolute top-0 right-0">
+          <SheetClose className="absolute top-0 right-0" aria-label="Close menu">
             <X />
           </SheetClose>
           <div className="flex flex-col gap-5 mt-10">

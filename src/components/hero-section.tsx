@@ -9,7 +9,7 @@ import {
 
 import Container from "./container";
 import { Button } from "./ui/button";
-import parse from "html-react-parser";
+import Image from "next/image";
 
 import React from "react";
 import { ArrowLeft, ArrowRight, Captions, Mic } from "lucide-react";
@@ -20,6 +20,10 @@ import { ButtonLink } from "./common/button-link";
 import { SpotlightAnime } from "@/types/anime";
 import { Badge } from "./ui/badge";
 
+function stripHtml(html: string) {
+  return html.replace(/<[^>]*>/g, "");
+}
+
 type IHeroSectionProps = {
   spotlightAnime: SpotlightAnime[];
   isDataLoading: boolean;
@@ -27,60 +31,67 @@ type IHeroSectionProps = {
 
 const HeroSection = (props: IHeroSectionProps) => {
   const [api, setApi] = React.useState<CarouselApi>();
+  const [currentIndex, setCurrentIndex] = React.useState(0);
 
   const autoplayPlugin = React.useRef(
-    Autoplay({ delay: 6000, stopOnInteraction: false, stopOnMouseEnter: true }),
+    Autoplay({ delay: 6000, stopOnInteraction: true, stopOnMouseEnter: true }),
   );
+
+  React.useEffect(() => {
+    if (!api) return;
+    const onSelect = () => setCurrentIndex(api.selectedScrollSnap());
+    api.on("select", onSelect);
+    return () => { api.off("select", onSelect); };
+  }, [api]);
 
   if (props.isDataLoading) return <LoadingSkeleton />;
   if (!props.spotlightAnime || props.spotlightAnime.length === 0) return null;
 
-  const firstPoster = props.spotlightAnime[0]?.poster;
-
   return (
-    <>
-      {firstPoster && (
-        <link rel="preload" href={firstPoster} as="image" />
-      )}
-      <div className="h-[calc(50vh+72px)] md:h-[calc(80vh+72px)] w-full relative -mt-[72px] overflow-hidden">
-      <Carousel className="w-full h-full" setApi={setApi} opts={{ loop: true }} plugins={[autoplayPlugin.current]}>
+    <div className="relative w-full h-[65vh] md:h-[85vh] -mt-[72px] overflow-hidden">
+      <Carousel className="absolute inset-0" setApi={setApi} opts={{ loop: true }} plugins={[autoplayPlugin.current]}>
         <CarouselContent className="h-full">
           {props.spotlightAnime.map((anime, index) => (
             <CarouselItem key={index} className="h-full pl-0">
-              <div
-                className="w-full h-full bg-cover bg-center bg-no-repeat relative flex items-end md:items-center"
-                style={{ backgroundImage: `url(${anime.poster})` }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-slate-900 to-transparent z-10"></div>
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent z-10"></div>
+              <div className="w-full h-full relative overflow-hidden">
+                <Image
+                  src={anime.poster}
+                  alt={anime.name}
+                  fill
+                  priority={index === 0}
+                  sizes="100vw"
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-900/50 to-transparent z-10"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/30 to-transparent z-10"></div>
 
-                <div className="relative z-20 w-full pb-10 md:py-10">
+                <div className="absolute inset-0 z-20 flex items-end md:items-center pb-12 md:pb-0">
                   <Container>
-                    <div className="space-y-2 lg:w-[40vw]">
-                      <h1 className="text-2xl md:text-4xl font-black">{anime.name}</h1>
+                    <div className="max-w-xl space-y-3">
+                      <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-black leading-tight drop-shadow-lg">{anime.name}</h1>
 
-                      <div className="flex flex-row items-center space-x-2">
+                      <div className="flex flex-row items-center flex-wrap gap-2">
                         {anime.episodes.sub && (
-                          <Badge className="bg-red-200 flex flex-row items-center space-x-0.5">
+                          <Badge className="bg-red-500/90 flex flex-row items-center space-x-0.5">
                             <Captions size={"16"} />
                             <span>{anime.episodes.sub}</span>
                           </Badge>
                         )}
                         {anime.episodes.dub && (
-                          <Badge className="bg-green-200 flex flex-row items-center space-x-0.5">
+                          <Badge className="bg-green-500/90 flex flex-row items-center space-x-0.5">
                             <Mic size={"16"} />
                             <span>{anime.episodes.dub}</span>
                           </Badge>
                         )}
                       </div>
 
-                      <p className="text-lg line-clamp-4">
-                        {parse(anime.description as string)}
+                      <p className="text-sm sm:text-base line-clamp-3 text-gray-200 max-w-prose">
+                        {stripHtml(anime.description || "")}
                       </p>
-                      <div className="flex items-center gap-5 !mt-5">
+                      <div className="flex items-center gap-4 pt-1">
                         <ButtonLink
                           href={`${ROUTES.ANIME_DETAILS}/${anime.id}`}
-                          className="h-10 text-md bg-[#e9376b] text-white hover:bg-[#e9376b]"
+                          className="h-10 px-6 text-sm sm:text-base bg-[#e9376b] text-white hover:bg-[#d62d5d] rounded-lg shadow-lg shadow-[#e9376b]/25"
                         >
                           Learn More
                         </ButtonLink>
@@ -94,36 +105,57 @@ const HeroSection = (props: IHeroSectionProps) => {
         </CarouselContent>
       </Carousel>
 
-      <div className="absolute hidden md:flex items-center gap-5 right-10 bottom-24 z-50 isolate">
+      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#121212] to-transparent z-30 pointer-events-none"></div>
+
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2">
+        {props.spotlightAnime.map((_, idx) => (
+          <button
+            key={idx}
+            onClick={() => api?.scrollTo(idx)}
+            className={`rounded-full transition-all duration-300 ${
+              idx === currentIndex
+                ? "w-6 h-1.5 bg-[#e9376b]"
+                : "w-1.5 h-1.5 bg-white/40 hover:bg-white/60"
+            }`}
+            aria-label={`Go to slide ${idx + 1}`}
+          />
+        ))}
+      </div>
+
+      <div className="absolute hidden md:flex items-center gap-3 right-6 bottom-24 z-40">
         <Button
           onClick={() => api?.scrollPrev()}
-          className="rounded-full bg-transparent border border-white h-10 w-10 hover:bg-slate-500"
+          className="rounded-full bg-white/10 backdrop-blur-sm border border-white/30 h-9 w-9 hover:bg-white/20"
+          aria-label="Previous slide"
         >
-          <ArrowLeft className="text-white shrink-0" />
+          <ArrowLeft className="text-white shrink-0 h-4 w-4" />
         </Button>
         <Button
           onClick={() => api?.scrollNext()}
-          className="rounded-full bg-transparent border border-white h-10 w-10 hover:bg-slate-500"
+          className="rounded-full bg-white/10 backdrop-blur-sm border border-white/30 h-9 w-9 hover:bg-white/20"
+          aria-label="Next slide"
         >
-          <ArrowRight className="text-white shrink-0" />
+          <ArrowRight className="text-white shrink-0 h-4 w-4" />
         </Button>
       </div>
     </div>
-    </>
   );
 };
 
 const LoadingSkeleton = () => {
   return (
-    <div className="h-[calc(50vh+72px)] md:h-[calc(80vh+72px)] w-full relative -mt-[72px] bg-slate-800 animate-pulse">
-      <div className="h-full flex items-end md:items-center pb-10 md:py-10">
+    <div className="relative w-full h-[65vh] md:h-[85vh] -mt-[72px] bg-slate-800 animate-pulse">
+      <div className="h-full flex items-end md:items-center pb-8 md:pb-0">
         <Container>
-          <div className="space-y-2 lg:w-[40vw]">
-            <div className="h-16 bg-slate-700 w-[75%]"></div>
-            <div className="h-40 bg-slate-700 w-full"></div>
-            <div className="flex items-center gap-5">
-              <span className="h-10 w-[7.5rem] bg-slate-700"></span>
-              <span className="h-10 w-[7.5rem] bg-slate-700"></span>
+          <div className="space-y-3 lg:w-[40vw]">
+            <div className="h-8 sm:h-10 md:h-16 bg-slate-700 w-[75%] rounded"></div>
+            <div className="flex gap-2">
+              <span className="h-6 w-16 bg-slate-700 rounded-full"></span>
+              <span className="h-6 w-16 bg-slate-700 rounded-full"></span>
+            </div>
+            <div className="h-16 sm:h-20 bg-slate-700 w-full rounded"></div>
+            <div className="flex items-center gap-4">
+              <span className="h-10 w-[8rem] bg-slate-700 rounded-lg"></span>
             </div>
           </div>
         </Container>

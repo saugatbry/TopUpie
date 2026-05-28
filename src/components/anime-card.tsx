@@ -44,7 +44,7 @@ const AnimeCard = ({
   const percentage = safeTotal > 0 ? (clampedCurrent / safeTotal) * 100 : 0;
 
   return (
-    <Link href={props.href as string}>
+    <Link href={props.href as string} aria-label={props.title}>
       <div
         className={cn([
           "rounded-xl overflow-hidden relative cursor-pointer hover:scale-105 duration-300",
