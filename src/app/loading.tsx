@@ -4,12 +4,12 @@ import Image from "next/image";
 const Loading = () => {
   return (
     <div className="h-screen w-screen flex items-center justify-center">
-      <div className="h-[10.25rem] w-[10.25rem]">
+      <div className="h-16 w-16">
         <Image
           src="/loader.gif"
           alt="Loading..."
           fill
-          sizes="10.25rem"
+          sizes="4rem"
           className="object-contain"
           suppressHydrationWarning
         />

@@ -618,36 +618,40 @@ export const hianime = {
         fetchWithRetry(`${JIKAN_API}/anime/${id}`).catch(() => ({ data: { episodes: 0 } })),
       ]);
 
-      const totalPages = firstPage.pagination?.last_visible_page || 1;
-      const totalEpisodes = animeInfo.data?.episodes;
+      const totalEpisodes = animeInfo.data?.episodes || 0;
+      const existingEpisodes: any[] = firstPage.data || [];
 
-      let allData = firstPage.data || [];
-
-      if (totalPages > 1) {
-        const pageUrls: string[] = [];
-        for (let p = 2; p <= totalPages; p++) {
-          pageUrls.push(`${JIKAN_API}/anime/${id}/episodes?page=${p}`);
-        }
-        const results = await fetchAllWithConcurrency(pageUrls, 3);
-        for (const page of results) {
-          allData = allData.concat(page.data || []);
+      const episodeMap = new Map<number, any>();
+      for (const ep of existingEpisodes) {
+        const epNum = parseInt(ep.mal_id, 10) || parseInt(ep.episode, 10) || 0;
+        if (epNum > 0) {
+          episodeMap.set(epNum, ep);
         }
       }
 
-      const episodes = allData.map((ep: any, idx: number) => {
-        const epNum = parseInt(ep.mal_id, 10) || parseInt(ep.episode, 10) || idx + 1;
-        return {
-          number: epNum,
-          episodeId: `${id}-${epNum}`,
-          title: ep.title || `Episode ${epNum}`,
-          isFiller: ep.filler || false,
-        };
-      });
+      const count = totalEpisodes > 0 ? totalEpisodes : Math.max(existingEpisodes.length, firstPage.pagination?.items?.total || 0);
 
-      return {
-        totalEpisodes: totalEpisodes || episodes.length,
-        episodes,
-      };
+      const episodes: any[] = [];
+      for (let i = 1; i <= count; i++) {
+        const ep = episodeMap.get(i);
+        if (ep) {
+          episodes.push({
+            number: i,
+            episodeId: `${id}-${i}`,
+            title: ep.title || `Episode ${i}`,
+            isFiller: ep.filler || false,
+          });
+        } else {
+          episodes.push({
+            number: i,
+            episodeId: `${id}-${i}`,
+            title: `Episode ${i}`,
+            isFiller: false,
+          });
+        }
+      }
+
+      return { totalEpisodes: count, episodes };
     } catch (error) {
       console.error("Error fetching episodes:", error);
       return { totalEpisodes: 0, episodes: [] };
