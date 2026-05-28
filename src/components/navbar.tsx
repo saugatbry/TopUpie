@@ -12,7 +12,7 @@ import { ROUTES } from "@/constants/routes";
 import React, { ReactNode, useState } from "react";
 
 import SearchBar from "./search-bar";
-import { MenuIcon, X } from "lucide-react";
+import { MenuIcon, SearchIcon, X } from "lucide-react";
 import useScrollPosition from "@/hooks/use-scroll-position";
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from "./ui/sheet";
 import LoginPopoverButton from "./login-popover-button";
@@ -40,6 +40,7 @@ const NavBar = () => {
   const { y } = useScrollPosition();
   const isHeaderFixed = true;
   const isHeaderSticky = y > 0;
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
   return (
     <div
@@ -52,16 +53,16 @@ const NavBar = () => {
           : "",
       ])}
     >
-      <Container className="flex items-center justify-between py-2 gap-20 ">
+      <Container className="flex items-center justify-between py-2 gap-4 md:gap-10 lg:gap-20 ">
         <Link
           href={ROUTES.HOME}
-          className="flex items-center gap-1 cursor-pointer"
+          className="flex items-center gap-1 cursor-pointer shrink-0"
         >
-          <Image src="https://i.ibb.co/kCDz26G/image-removebg-preview.png" alt="logo" width={70} height={70} unoptimized />
+          <Image src="https://i.ibb.co/kCDz26G/image-removebg-preview.png" alt="logo" width={50} height={50} className="md:w-[70px] md:h-[70px]" unoptimized />
           <h1
             className={cn([
               nightTokyo.className,
-              "text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-gray-200 to-pink-600 tracking-widest",
+              "text-lg md:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-gray-200 to-pink-600 tracking-widest",
             ])}
           >
             TopUpie Anime
@@ -79,11 +80,19 @@ const NavBar = () => {
           <SearchBar />
           {auth.auth ? <NavbarAvatar auth={auth} /> : <LoginPopoverButton />}
         </div>
-        <div className="lg:hidden flex items-center gap-5">
+        <div className="lg:hidden flex items-center gap-2">
+          <button onClick={() => setMobileSearchOpen(!mobileSearchOpen)}>
+            <SearchIcon suppressHydrationWarning className="h-5 w-5" />
+          </button>
           <MobileMenuSheet trigger={<MenuIcon suppressHydrationWarning />} />
           {auth.auth ? <NavbarAvatar auth={auth} /> : <LoginPopoverButton />}
         </div>
       </Container>
+      {mobileSearchOpen && (
+        <div className="lg:hidden px-4 pb-3">
+          <SearchBar onAnimeClick={() => setMobileSearchOpen(false)} />
+        </div>
+      )}
     </div>
   );
 };

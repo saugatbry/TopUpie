@@ -30,7 +30,7 @@ const HeroSection = (props: IHeroSectionProps) => {
   if (props.isDataLoading) return <LoadingSkeleton />;
 
   return (
-    <div className="h-[80vh] w-full relative">
+    <div className="h-[50vh] md:h-[80vh] w-full relative">
       <Carousel className="w-full" setApi={setApi} opts={{}}>
         <CarouselContent className="">
           {props?.spotlightAnime.map((anime, index) => (
@@ -80,7 +80,7 @@ const HeroCarouselItem = ({ anime }: { anime: SpotlightAnime }) => {
 
   return (
     <div
-      className={`w-full bg-cover bg-no-repeat bg-center h-[80vh] relative`}
+      className={`w-full bg-cover bg-no-repeat bg-center h-[50vh] md:h-[80vh] relative`}
       style={{ backgroundImage: `url(${anime?.poster})` }}
       // onMouseEnter={handleMouseEnter}
       // onMouseLeave={handleMouseLeave}
@@ -106,7 +106,7 @@ const HeroCarouselItem = ({ anime }: { anime: SpotlightAnime }) => {
         <Container className="w-full h-full flex flex-col justify-end md:justify-center pb-10">
           <div className="space-y-2 lg:w-[40vw]">
             {/* Title and description moved inside the hover area */}
-            <h1 className="text-4xl font-black">{anime?.name}</h1>
+            <h1 className="text-2xl md:text-4xl font-black">{anime?.name}</h1>
 
             <div className="flex flex-row items-center space-x-2 ">
               {anime.episodes.sub && (
@@ -146,7 +146,7 @@ const HeroCarouselItem = ({ anime }: { anime: SpotlightAnime }) => {
 
 const LoadingSkeleton = () => {
   return (
-    <div className="h-[80vh] w-full relative">
+    <div className="h-[50vh] md:h-[80vh] w-full relative">
       <div className="w-full h-[calc(100%-5.25rem)] mt-[5.25rem] relative z-20">
         <Container className="w-full h-full flex flex-col justify-end md:justify-center pb-10">
           <div className="space-y-2 lg:w-[40vw]">
