@@ -1,5 +1,5 @@
 import "./globals.css";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 
 import NavBar from "@/components/navbar";
@@ -17,20 +17,27 @@ const geistSans = localFont({
   variable: "--font-geist-sans",
   weight: "100 900",
 });
-// const geistMono = localFont({
-//   src: "./fonts/GeistMonoVF.woff",
-//   variable: "--font-geist-mono",
-//   weight: "100 900",
-// });
 
 const APP_NAME = "TopUpie Anime";
-const APP_DEFAULT_TITLE = "TopUpie Anime";
-const APP_DESCRIPTION = "Stream your favourite anime with ease and no ads";
+const APP_DEFAULT_TITLE = "TopUpie Anime - Watch Free Anime Online in HD";
+const APP_DESCRIPTION = "Aniwave - Watch Free Anime Online in HD Quality. Stream anime free in HD with sub & dub options. Browse thousands of titles by genre, year, studio, and more. No ads, no bullshit.";
+const APP_KEYWORDS = ["free anime website", "watch anime online free", "anime streaming", "anime online hd", "sub and dub anime", "free anime no ads", "best free anime website", "anime website online", "anime streaming free hd", "watch anime free"];
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#282A36",
+};
 
 export const metadata: Metadata = {
   applicationName: APP_NAME,
-  title: APP_DEFAULT_TITLE,
+  title: {
+    default: APP_DEFAULT_TITLE,
+    template: "%s | TopUpie Anime",
+  },
   description: APP_DESCRIPTION,
+  keywords: APP_KEYWORDS,
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -45,12 +52,38 @@ export const metadata: Metadata = {
     siteName: APP_NAME,
     title: APP_DEFAULT_TITLE,
     description: APP_DESCRIPTION,
+    url: "https://topupieanime.vercel.app",
+    locale: "en_US",
+    images: [
+      {
+        url: "https://i.ibb.co/kCDz26G/image-removebg-preview.png",
+        width: 192,
+        height: 192,
+        alt: "TopUpie Anime",
+      },
+    ],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: APP_DEFAULT_TITLE,
     description: APP_DESCRIPTION,
+    images: ["https://i.ibb.co/kCDz26G/image-removebg-preview.png"],
   },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  verification: {
+    google: "YOUR_GOOGLE_SEARCH_CONSOLE_ID",
+  },
+  category: "entertainment",
 };
 
 export default function RootLayout({

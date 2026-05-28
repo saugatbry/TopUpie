@@ -4,9 +4,9 @@
   "display": "standalone",
   "scope": "/",
   "start_url": "/",
-  "name": "Kitsune",
-  "short_name": "Kitsune",
-  "description": "Watch anime with ease and no ads",
+  "name": "TopUpie Anime",
+  "short_name": "TopUpie",
+  "description": "Watch Free Anime Online in HD - Stream anime free with sub & dub. No ads.",
   "orientation": "portrait-primary",
   "icons": [
     {

@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import Head from "next/head";
 
 import Container from "@/components/container";
 import AnimeCard from "@/components/anime-card";
@@ -30,6 +31,7 @@ import { useAuthStore } from "@/store/auth-store";
 import { toast } from "sonner";
 import useBookMarks from "@/hooks/use-get-bookmark";
 import { useGetAnimeBanner } from "@/query/get-banner-anime";
+import { AnimeJsonLd } from "@/components/json-ld";
 
 const SelectOptions: ISelectOptions[] = [
   {
@@ -103,7 +105,29 @@ const Page = () => {
   return isLoading || !anime ? (
     <Loading />
   ) : (
-    <div className="w-full z-50">
+    <>
+      <Head>
+        <title>{anime.anime.info.name} | TopUpie Anime</title>
+        <meta name="description" content={anime.anime.info.description?.slice(0, 160)} />
+        <meta property="og:title" content={`${anime.anime.info.name} | TopUpie Anime`} />
+        <meta property="og:description" content={anime.anime.info.description?.slice(0, 160)} />
+        <meta property="og:image" content={anime.anime.info.poster} />
+        <meta name="twitter:title" content={`${anime.anime.info.name} | TopUpie Anime`} />
+        <meta name="twitter:description" content={anime.anime.info.description?.slice(0, 160)} />
+        <meta name="twitter:image" content={anime.anime.info.poster} />
+      </Head>
+      <AnimeJsonLd
+        name={anime.anime.info.name}
+        description={anime.anime.info.description}
+        image={anime.anime.info.poster}
+        rating={anime.anime.moreInfo.malscore}
+        genres={anime.anime.moreInfo.genres}
+        status={anime.anime.moreInfo.status}
+        type={anime.anime.info.stats.type}
+        studio={anime.anime.moreInfo.studios}
+        aired={anime.anime.moreInfo.aired}
+      />
+      <div className="w-full z-50">
       <div className="h-[30vh] md:h-[40vh] w-full relative ">
         {bannerLoading ? (
           <div className="absolute inset-0 m-auto w-full h-full bg-slate-900 animate-pulse"></div>
@@ -281,6 +305,7 @@ const Page = () => {
         )}
       </Container>
     </div>
+    </>
   );
   //eslint-disable-next-line
 };
