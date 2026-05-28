@@ -94,6 +94,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://www.googletagmanager.com" />
+        <link rel="dns-prefetch" href="https://api.jikan.moe" />
+        <link rel="dns-prefetch" href="https://cdn.myanimelist.net" />
+        <link rel="dns-prefetch" href="https://i.ibb.co" />
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-X9RZ58XPH1"
           strategy="afterInteractive"
@@ -120,9 +124,9 @@ export default function RootLayout({
         >
           <QueryProvider>
             <NavBar />
-            <div>
+            <main id="main-content" role="main">
               {children}
-            </div>
+            </main>
             <Footer />
           </QueryProvider>
         </ThemeProvider>

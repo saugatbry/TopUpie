@@ -8,10 +8,10 @@ const Footer = () => {
     <footer className="w-full bg-base-300 shadow-xl p-5 flex flex-col items-center space-y-5">
       <Image
         src="https://i.ibb.co/kCDz26G/image-removebg-preview.png"
-        alt="logo"
+        alt="TopUpie Anime"
         width="100"
         height="100"
-        unoptimized
+        loading="lazy"
         suppressHydrationWarning
       />
       <div className="flex space-x-5 items-center">

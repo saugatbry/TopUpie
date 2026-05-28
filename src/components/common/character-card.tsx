@@ -22,11 +22,11 @@ const CharacterCard = ({ ...props }: Props) => {
     >
       <Image
         src={props.character.character.poster}
-        alt="image"
-        height={100}
-        width={100}
-        className="w-full h-full object-cover"
-        unoptimized
+        alt={props.character.character.name}
+        fill
+        sizes="12.5rem"
+        className="object-cover"
+        loading="lazy"
       />
 
       <div className="absolute inset-0 m-auto h-full w-full bg-gradient-to-t from-[#000000a9] to-transparent"></div>

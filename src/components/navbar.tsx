@@ -42,7 +42,7 @@ const NavBar = () => {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
   return (
-    <div
+    <nav
       className={cn([
         "h-fit w-full",
         "sticky top-0 z-[100] duration-300",
@@ -51,21 +51,23 @@ const NavBar = () => {
           ? "bg-clip-padding backdrop-filter backdrop-blur-md bg-opacity-10 bg-slate-900"
           : "",
       ])}
+      aria-label="Main navigation"
     >
       <Container className="flex items-center justify-between py-2 gap-4 md:gap-10 lg:gap-20 ">
         <Link
           href={ROUTES.HOME}
           className="flex items-center gap-1 cursor-pointer shrink-0"
+          aria-label="Home page"
         >
-          <Image src="https://i.ibb.co/kCDz26G/image-removebg-preview.png" alt="logo" width={50} height={50} className="md:w-[70px] md:h-[70px]" unoptimized />
-          <h1
+          <Image src="https://i.ibb.co/kCDz26G/image-removebg-preview.png" alt="TopUpie Anime logo" width={50} height={50} className="md:w-[70px] md:h-[70px]" />
+          <span
             className={cn([
               nightTokyo.className,
               "text-lg md:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-gray-200 to-pink-600 tracking-widest",
             ])}
           >
             TopUpie Anime
-          </h1>
+          </span>
         </Link>
 
         <div className="hidden lg:flex items-center gap-10 ml-20">
@@ -80,7 +82,7 @@ const NavBar = () => {
           {auth.auth ? <NavbarAvatar auth={auth} /> : <LoginPopoverButton />}
         </div>
         <div className="lg:hidden flex items-center gap-2">
-          <button onClick={() => setMobileSearchOpen(!mobileSearchOpen)}>
+          <button onClick={() => setMobileSearchOpen(!mobileSearchOpen)} aria-label="Toggle search">
             <SearchIcon suppressHydrationWarning className="h-5 w-5" />
           </button>
           <MobileMenuSheet trigger={<MenuIcon suppressHydrationWarning />} />
@@ -92,7 +94,7 @@ const NavBar = () => {
           <SearchBar onAnimeClick={() => setMobileSearchOpen(false)} />
         </div>
       )}
-    </div>
+    </nav>
   );
 };
 

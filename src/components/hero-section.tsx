@@ -35,8 +35,14 @@ const HeroSection = (props: IHeroSectionProps) => {
   if (props.isDataLoading) return <LoadingSkeleton />;
   if (!props.spotlightAnime || props.spotlightAnime.length === 0) return null;
 
+  const firstPoster = props.spotlightAnime[0]?.poster;
+
   return (
-    <div className="h-[calc(50vh+72px)] md:h-[calc(80vh+72px)] w-full relative -mt-[72px] overflow-hidden">
+    <>
+      {firstPoster && (
+        <link rel="preload" href={firstPoster} as="image" />
+      )}
+      <div className="h-[calc(50vh+72px)] md:h-[calc(80vh+72px)] w-full relative -mt-[72px] overflow-hidden">
       <Carousel className="w-full h-full" setApi={setApi} opts={{ loop: true }} plugins={[autoplayPlugin.current]}>
         <CarouselContent className="h-full">
           {props.spotlightAnime.map((anime, index) => (
@@ -103,6 +109,7 @@ const HeroSection = (props: IHeroSectionProps) => {
         </Button>
       </div>
     </div>
+    </>
   );
 };
 

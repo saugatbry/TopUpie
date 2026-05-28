@@ -5,7 +5,7 @@ import Image from "next/image";
 import { cn, formatSecondsToMMSS } from "@/lib/utils";
 import { Badge } from "./ui/badge";
 import { Captions, Mic } from "lucide-react";
-import { WatchHistory } from "@/hooks/use-get-bookmark";
+import type { WatchHistory } from "@/hooks/use-get-bookmark";
 import { Progress } from "./ui/progress";
 
 type Props = {
@@ -50,7 +50,6 @@ const AnimeCard = ({
           "rounded-xl overflow-hidden relative cursor-pointer hover:scale-105 duration-300",
           variant === "sm" &&
             "h-[12rem] min-[320px]:h-[16.625rem] sm:h-[18rem] max-w-[12.625rem] md:min-w-[12rem]",
-          ,
           variant === "lg" &&
             "max-w-[12.625rem] md:max-w-[18.75rem] h-auto md:h-[25rem] shrink-0 lg:w-[18.75rem]",
           props.className,
@@ -58,11 +57,11 @@ const AnimeCard = ({
       >
         <Image
           src={props.poster}
-          alt="image"
-          height={100}
-          width={100}
-          className="w-full h-full object-cover"
-          unoptimized
+          alt={props.title || "Anime poster"}
+          fill
+          sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 20vw, 12.5rem"
+          className="object-cover"
+          loading="lazy"
         />
         {displayDetails && (
           <>

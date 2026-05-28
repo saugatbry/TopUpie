@@ -137,10 +137,10 @@ const Page = () => {
               (banner?.Media.bannerImage as string) || anime.anime.info.poster
             }
             alt={anime.anime.info.name}
-            height={100}
-            width={100}
-            className="h-full w-full object-cover"
-            unoptimized
+            fill
+            sizes="100vw"
+            className="object-cover"
+            priority
           />
         )}
 
