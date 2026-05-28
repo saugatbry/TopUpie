@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
-const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://topupie.vercel.app";
+const raw = process.env.NEXT_PUBLIC_SITE_URL || "https://topupie.vercel.app";
+const baseUrl = raw.replace(/\/+$/, "");
 
 const POPULAR_MAL_IDS = [
   21, 16498, 15335, 30276, 5114, 28977, 9253, 1, 269, 22319,
