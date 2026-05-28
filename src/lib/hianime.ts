@@ -1,6 +1,7 @@
 import { getCached, setCache } from "./cache";
 import { refreshProxies, getNextProxy } from "./proxy";
 import { getPreSeededEpisodeCount } from "@/data/episode-counts";
+import { getAnilistEpisodeCount } from "./anilist";
 
 
 // Using Jikan API v4 - a reliable and well-maintained anime API
@@ -596,6 +597,23 @@ export const hianime = {
         }
         const result = { totalEpisodes: preSeeded, episodes };
         episodeCountCache.set(id, preSeeded);
+        await setCache(EP_CACHE_KEY, result);
+        return result;
+      }
+
+      const anilist = await getAnilistEpisodeCount(id);
+      if (anilist.count !== null && anilist.count > 0) {
+        const episodes: any[] = [];
+        for (let i = 1; i <= anilist.count; i++) {
+          episodes.push({
+            number: i,
+            episodeId: `${id}-${i}`,
+            title: `Episode ${i}`,
+            isFiller: false,
+          });
+        }
+        const result = { totalEpisodes: anilist.count, episodes };
+        episodeCountCache.set(id, anilist.count);
         await setCache(EP_CACHE_KEY, result);
         return result;
       }
