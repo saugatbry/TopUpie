@@ -81,7 +81,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: "NDKw4kEDMG0csBWqBqRTxTf7",
+    google: "NDKw4kEDMG0csBWqBqRTxTf7-W2jNHa02F9D8siDzn8",
   },
   category: "entertainment",
 };

@@ -27,6 +27,10 @@ export async function getCached(key: string, maxAge: number): Promise<any | null
 }
 
 export async function setCache(key: string, data: any) {
-  await ensureDir();
-  await fs.writeFile(keyToFile(key), JSON.stringify({ ts: Date.now(), data }));
+  try {
+    await ensureDir();
+    await fs.writeFile(keyToFile(key), JSON.stringify({ ts: Date.now(), data }));
+  } catch {
+    // cache is best-effort; failures (read-only fs, no space) should not break the app
+  }
 }
