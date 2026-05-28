@@ -15,7 +15,7 @@ type Props = {
 const LatestEpisodesAnime = (props: Props) => {
   if (props.loading) return <LoadingSkeleton />;
   return (
-    <Container className="flex flex-col gap-5 py-10 items-center lg:items-start lg:mt-[-10.125rem] z-20 ">
+    <Container className="flex flex-col gap-5 py-10 items-center lg:items-start z-20 ">
       <h5 className="text-2xl font-bold">Recent Releases</h5>
       <div className="grid lg:grid-cols-5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 w-full gap-5 content-center">
         {props.latestEpisodes?.map((anime, idx) => (
@@ -39,7 +39,7 @@ const LatestEpisodesAnime = (props: Props) => {
 
 const LoadingSkeleton = () => {
   return (
-    <Container className="flex flex-col gap-5 py-10 items-center lg:items-start lg:mt-[-10.125rem] z-20 ">
+    <Container className="flex flex-col gap-5 py-10 items-center lg:items-start z-20 ">
       <div className="h-10 w-[15.625rem] animate-pulse bg-slate-700"></div>
       <div className="grid lg:grid-cols-5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 w-full gap-5 content-center">
         {[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1].map((_, idx) => {
