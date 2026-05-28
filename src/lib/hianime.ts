@@ -12,6 +12,10 @@ let requestCount = 0;
 let windowStart = Date.now();
 let proxyFetchEnabled = false;
 
+// Global in-memory cache for episode counts — persists across requests
+// within the same serverless function warm instance
+const episodeCountCache = new Map<string, number>();
+
 async function doFetch(url: string, useProxy = false, proxyUrl?: string | null): Promise<Response> {
   const headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
@@ -580,8 +584,23 @@ export const hianime = {
 
   async getEpisodes(id: string) {
     try {
+      const cachedCount = episodeCountCache.get(id);
+      if (cachedCount !== undefined) {
+        const episodes: any[] = [];
+        for (let i = 1; i <= cachedCount; i++) {
+          episodes.push({
+            number: i,
+            episodeId: `${id}-${i}`,
+            title: `Episode ${i}`,
+            isFiller: false,
+          });
+        }
+        return { totalEpisodes: cachedCount, episodes };
+      }
+
       const preSeeded = getPreSeededEpisodeCount(id);
       if (preSeeded !== null) {
+        episodeCountCache.set(id, preSeeded);
         const episodes: any[] = [];
         for (let i = 1; i <= preSeeded; i++) {
           episodes.push({
@@ -666,6 +685,7 @@ export const hianime = {
         }
       }
 
+      if (count > 0) episodeCountCache.set(id, count);
       return { totalEpisodes: count, episodes };
     } catch (error) {
       console.error("Error fetching episodes:", error);
