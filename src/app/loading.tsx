@@ -3,13 +3,13 @@ import Image from "next/image";
 
 const Loading = () => {
   return (
-    <div className="h-screen w-screen flex items-center justify-center">
-      <div className="h-16 w-16">
+    <div className="h-screen w-screen flex items-center justify-center bg-[#121212]">
+      <div className="h-8 w-8">
         <Image
           src="/loader.gif"
           alt="Loading..."
           fill
-          sizes="4rem"
+          sizes="2rem"
           className="object-contain"
           suppressHydrationWarning
         />

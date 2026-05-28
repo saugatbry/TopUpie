@@ -1,5 +1,6 @@
 import { getCached, setCache } from "./cache";
 import { refreshProxies, getNextProxy } from "./proxy";
+import { getPreSeededEpisodeCount } from "@/data/episode-counts";
 
 
 // Using Jikan API v4 - a reliable and well-maintained anime API
@@ -579,6 +580,20 @@ export const hianime = {
 
   async getEpisodes(id: string) {
     try {
+      const preSeeded = getPreSeededEpisodeCount(id);
+      if (preSeeded !== null) {
+        const episodes: any[] = [];
+        for (let i = 1; i <= preSeeded; i++) {
+          episodes.push({
+            number: i,
+            episodeId: `${id}-${i}`,
+            title: `Episode ${i}`,
+            isFiller: false,
+          });
+        }
+        return { totalEpisodes: preSeeded, episodes };
+      }
+
       const fetchWithRetry = async (url: string) => {
         const cached = await getCached(url, CACHE_TIME);
         if (cached) return cached;
