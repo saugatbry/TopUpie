@@ -16,11 +16,15 @@ async function doFetch(url: string, useProxy = false, proxyUrl?: string | null):
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
   };
   if (useProxy && proxyUrl) {
-    const { fetch: uFetch, ProxyAgent: PAgent } = await import("undici");
-    const agent = new PAgent(proxyUrl);
-    return uFetch(url, { headers, dispatcher: agent }) as unknown as Response;
+    try {
+      const { fetch: uFetch, ProxyAgent: PAgent } = await import("undici");
+      const agent = new PAgent(proxyUrl);
+      return await uFetch(url, { headers, dispatcher: agent, signal: AbortSignal.timeout(10000) }) as unknown as Response;
+    } catch {
+      // proxy failed, fall back to direct fetch
+    }
   }
-  return fetch(url, { headers });
+  return fetch(url, { headers, signal: AbortSignal.timeout(15000) });
 }
 
 async function rateLimitedFetch(url: string, retries = 3): Promise<any> {
@@ -70,10 +74,6 @@ async function rateLimitedFetch(url: string, retries = 3): Promise<any> {
     } catch (error: any) {
       if (attempt < retries) {
         if (error.message === "API error: 429") continue;
-        if (error.code === "ENOTFOUND" || error.code === "ECONNREFUSED" || error.code === "ECONNRESET") {
-          console.warn(`Proxy connection failed, retrying without proxy...`);
-          continue;
-        }
         continue;
       }
       throw error;
