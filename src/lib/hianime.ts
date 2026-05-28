@@ -1,4 +1,6 @@
 import { getCached, setCache } from "./cache";
+import { refreshProxies, getNextProxy } from "./proxy";
+
 
 // Using Jikan API v4 - a reliable and well-maintained anime API
 const JIKAN_API = "https://api.jikan.moe/v4";
@@ -7,16 +9,27 @@ const RATE_LIMIT_DELAY = 450; // ms between requests (Jikan allows ~3/sec)
 let lastRequestTime = 0;
 let requestCount = 0;
 let windowStart = Date.now();
+let proxyFetchEnabled = false;
+
+async function doFetch(url: string, useProxy = false, proxyUrl?: string | null): Promise<Response> {
+  const headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+  };
+  if (useProxy && proxyUrl) {
+    const { fetch: uFetch, ProxyAgent: PAgent } = await import("undici");
+    const agent = new PAgent(proxyUrl);
+    return uFetch(url, { headers, dispatcher: agent }) as unknown as Response;
+  }
+  return fetch(url, { headers });
+}
 
 async function rateLimitedFetch(url: string, retries = 3): Promise<any> {
   for (let attempt = 0; attempt <= retries; attempt++) {
     const now = Date.now();
-    // Reset window every second
     if (now - windowStart > 1000) {
       requestCount = 0;
       windowStart = now;
     }
-    // Allow up to 3 requests per second, else wait
     if (requestCount >= 3) {
       const wait = 1000 - (now - windowStart);
       if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
@@ -33,17 +46,18 @@ async function rateLimitedFetch(url: string, retries = 3): Promise<any> {
     requestCount++;
 
     try {
-      const response = await fetch(url, {
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        },
-      });
+      const useProxy = proxyFetchEnabled || (attempt >= retries - 1);
+      const proxyUrl = useProxy ? getNextProxy() : null;
+      const response = await doFetch(url, !!proxyUrl, proxyUrl);
 
       if (response.status === 429) {
+        if (!proxyFetchEnabled) {
+          proxyFetchEnabled = true;
+          refreshProxies().catch(() => {});
+        }
         const retryAfter = parseInt(response.headers.get("Retry-After") || "2", 10);
         const waitMs = Math.min(retryAfter * 1000, 5000);
-        console.warn(`Rate limited (429), retrying in ${waitMs}ms (attempt ${attempt + 1}/${retries + 1})`);
+        console.warn(`Rate limited (429), ${proxyUrl ? "using proxy" : ""} retrying in ${waitMs}ms (attempt ${attempt + 1}/${retries + 1})`);
         await new Promise((resolve) => setTimeout(resolve, waitMs));
         continue;
       }
@@ -54,7 +68,12 @@ async function rateLimitedFetch(url: string, retries = 3): Promise<any> {
 
       return await response.json();
     } catch (error: any) {
-      if (attempt < retries && error.message === "API error: 429") {
+      if (attempt < retries) {
+        if (error.message === "API error: 429") continue;
+        if (error.code === "ENOTFOUND" || error.code === "ECONNREFUSED" || error.code === "ECONNRESET") {
+          console.warn(`Proxy connection failed, retrying without proxy...`);
+          continue;
+        }
         continue;
       }
       throw error;
@@ -64,18 +83,23 @@ async function rateLimitedFetch(url: string, retries = 3): Promise<any> {
 
 async function fetchAllWithConcurrency(urls: string[], concurrency = 3): Promise<any[]> {
   const results: any[] = [];
-  const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
   for (let i = 0; i < urls.length; i += concurrency) {
     const batch = urls.slice(i, i + concurrency);
     const batchResults = await Promise.all(
       batch.map(async (url) => {
         const cached = await getCached(url, CACHE_TIME);
         if (cached) return cached;
-        for (let attempt = 0; attempt < 3; attempt++) {
+        for (let attempt = 0; attempt < 4; attempt++) {
           try {
-            const resp = await fetch(url, { headers: { "User-Agent": UA } });
+            const useProxy = proxyFetchEnabled || (attempt >= 2);
+            const proxyUrl = useProxy ? getNextProxy() : null;
+            const resp = await doFetch(url, !!proxyUrl, proxyUrl);
             if (!resp.ok) {
               if (resp.status === 429) {
+                if (!proxyFetchEnabled) {
+                  proxyFetchEnabled = true;
+                  refreshProxies().catch(() => {});
+                }
                 const wait = Math.min(parseInt(resp.headers.get("Retry-After") || "2", 10) * 1000, 5000);
                 await new Promise((r) => setTimeout(r, wait));
                 continue;
@@ -87,7 +111,11 @@ async function fetchAllWithConcurrency(urls: string[], concurrency = 3): Promise
             await setCache(url, data);
             return data;
           } catch (e) {
-            if (attempt === 2) {
+            if (e && typeof e === 'object' && 'code' in e && (e.code === "ENOTFOUND" || e.code === "ECONNREFUSED" || e.code === "ECONNRESET")) {
+              console.warn(`Proxy connection failed, retrying...`);
+              continue;
+            }
+            if (attempt === 3) {
               console.warn(`Failed to fetch ${url}, skipping:`, e);
               return { data: [] };
             }
@@ -551,23 +579,36 @@ export const hianime = {
 
   async getEpisodes(id: string) {
     try {
-      const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
       const fetchWithRetry = async (url: string) => {
         const cached = await getCached(url, CACHE_TIME);
         if (cached) return cached;
-        for (let attempt = 0; attempt < 3; attempt++) {
-          const r = await fetch(url, { headers: { "User-Agent": UA } });
-          if (r.ok) {
-            const d = await r.json();
-            await setCache(url, d);
-            return d;
-          }
-          if (r.status === 429) {
-            const wait = Math.min(parseInt(r.headers.get("Retry-After") || "2", 10) * 1000, 5000);
-            await new Promise((r) => setTimeout(r, wait));
+        for (let attempt = 0; attempt < 4; attempt++) {
+          try {
+            const useProxy = proxyFetchEnabled || (attempt >= 2);
+            const proxyUrl = useProxy ? getNextProxy() : null;
+            const r = await doFetch(url, !!proxyUrl, proxyUrl);
+            if (r.ok) {
+              const d = await r.json();
+              await setCache(url, d);
+              return d;
+            }
+            if (r.status === 429) {
+              if (!proxyFetchEnabled) {
+                proxyFetchEnabled = true;
+                refreshProxies().catch(() => {});
+              }
+              const wait = Math.min(parseInt(r.headers.get("Retry-After") || "2", 10) * 1000, 5000);
+              await new Promise((r) => setTimeout(r, wait));
+              continue;
+            }
+            throw new Error(`API error: ${r.status}`);
+          } catch (e: any) {
+            if (e?.code === "ENOTFOUND" || e?.code === "ECONNREFUSED" || e?.code === "ECONNRESET") {
+              continue;
+            }
+            if (attempt === 3) throw e;
             continue;
           }
-          throw new Error(`API error: ${r.status}`);
         }
         throw new Error(`API error: 429 (exhausted retries)`);
       };
