@@ -2,20 +2,16 @@ import type { MetadataRoute } from "next";
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://topupie.vercel.app";
 
-async function fetchTopAnimeIds(): Promise<number[]> {
-  try {
-    const res = await fetch(
-      "https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=25&page=1",
-    );
-    const data = await res.json();
-    return (data.data ?? []).map((a: any) => a.mal_id).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
+const POPULAR_MAL_IDS = [
+  21, 16498, 15335, 30276, 5114, 28977, 9253, 1, 269, 22319,
+  13601, 199, 11061, 1735, 14719, 11757, 38524, 41467, 24701,
+  20920, 28851, 24833, 31758, 34881, 9969, 28755, 20, 23273,
+  1575, 39468, 36098, 46102, 36456, 35120, 2251, 4565, 20507,
+  6594, 34134, 15, 2001, 8129, 4548, 33314, 34934, 35849,
+  31478, 10719, 37029, 392, 35760, 52701, 37510, 50620,
+];
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const topIds = await fetchTopAnimeIds();
+export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
 
   const staticPages = [
@@ -33,7 +29,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  const animePages = topIds.map((id) => ({
+  const animePages = POPULAR_MAL_IDS.map((id) => ({
     url: `${baseUrl}/anime/${id}`,
     lastModified: now,
     changeFrequency: "weekly" as const,
