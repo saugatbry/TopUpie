@@ -92,7 +92,8 @@ function LoginPopoverButton() {
       </PopoverTrigger>
       <PopoverContent
         side="bottom"
-        className="bg-black bg-opacity-50 backdrop-blur-sm w-[300px] mt-4 mr-4 p-4"
+        align="end"
+        className="bg-black bg-opacity-50 backdrop-blur-sm w-[300px] mt-4 mr-4 p-4 max-w-[90vw]"
       >
         <Tabs
           defaultValue={tabValue}

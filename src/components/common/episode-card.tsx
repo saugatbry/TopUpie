@@ -54,9 +54,9 @@ const EpisodeCard = ({
         {/* /> */}
 
         <div className="absolute inset-0 m-auto h-full w-full bg-gradient-to-t from-[#000000a9] to-transparent"></div>
-        <div className="absolute bottom-0 flex flex-col gap-1 px-4 pb-3">
-          <h5 className="line-clamp-1">{`${props.episode.number}. ${props.episode.title}`}</h5>
-          {/* <p className="line-clamp-2">{props.episode.airDate}</p> */}
+        <div className="absolute inset-0 m-auto h-full w-full bg-slate-800"></div>
+        <div className="absolute bottom-0 flex flex-col gap-1 px-4 pb-3 z-10">
+          <h5 className="line-clamp-2 text-sm font-semibold">{`${props.episode.number}. ${props.episode.title || `Episode ${props.episode.number}`}`}</h5>
         </div>
       </div>
     );

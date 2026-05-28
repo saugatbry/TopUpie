@@ -29,15 +29,17 @@ const VideoPlayerSection = () => {
   const { selectedEpisode, anime } = useAnimeStore();
   const animeId = anime?.anime?.info?.id;
 
-  const { data: serversData } = useGetEpisodeServers(selectedEpisode);
+  const activeEpisode = episodeId || selectedEpisode;
+
+  const { data: serversData } = useGetEpisodeServers(activeEpisode);
   const { data: episodesData } = useGetAllEpisodes(animeId ?? "");
 
   const currentEpIndex = useMemo(() => {
     if (!episodesData?.episodes) return -1;
     return episodesData.episodes.findIndex(
-      (ep) => ep.episodeId === (episodeId || selectedEpisode),
+      (ep) => ep.episodeId === activeEpisode,
     );
-  }, [episodesData, episodeId, selectedEpisode]);
+  }, [episodesData, activeEpisode]);
 
   const nextEpisode = useMemo(() => {
     if (currentEpIndex < 0 || !episodesData?.episodes) return null;

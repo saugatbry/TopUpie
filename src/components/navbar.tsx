@@ -38,7 +38,6 @@ const menuItems: Array<{ title: string; href?: string }> = [
 const NavBar = () => {
   const auth = useAuthStore();
   const { y } = useScrollPosition();
-  const isHeaderFixed = true;
   const isHeaderSticky = y > 0;
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
@@ -47,7 +46,7 @@ const NavBar = () => {
       className={cn([
         "h-fit w-full",
         "sticky top-0 z-[100] duration-300",
-        isHeaderFixed ? "fixed bg-gradient-to-b from-slate-700" : "",
+        "bg-gradient-to-b from-slate-700",
         isHeaderSticky
           ? "bg-clip-padding backdrop-filter backdrop-blur-md bg-opacity-10 bg-slate-900"
           : "",

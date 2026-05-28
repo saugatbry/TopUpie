@@ -16,6 +16,7 @@ export const useGetEpisodeServers = (episodeId: string) => {
   return useQuery({
     queryFn: () => getEpisodeServers(episodeId),
     queryKey: [GET_EPISODE_SERVERS, episodeId],
+    enabled: !!episodeId,
     refetchOnWindowFocus: false,
   });
 };
