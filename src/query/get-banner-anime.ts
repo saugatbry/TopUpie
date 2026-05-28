@@ -9,27 +9,27 @@ interface IAnimeBanner {
   };
 }
 
-const getAnimeBanner = async (anilistID: number) => {
+const getAnimeBanner = async (malId: number) => {
   const res = await api.post("https://graphql.anilist.co", {
     query: `
-      query ($id: Int) {
-        Media(id: $id, type: ANIME) {
+      query ($idMal: Int) {
+        Media(idMal: $idMal, type: ANIME) {
           id
           bannerImage
         }
       }
     `,
     variables: {
-      id: anilistID,
+      idMal: malId,
     },
   });
   return res.data.data as IAnimeBanner;
 };
 
-export const useGetAnimeBanner = (anilistID: number) => {
+export const useGetAnimeBanner = (malId: number) => {
   return useQuery({
-    queryFn: () => getAnimeBanner(anilistID),
-    queryKey: [GET_ANIME_BANNER, anilistID],
-    enabled: !!anilistID,
+    queryFn: () => getAnimeBanner(malId),
+    queryKey: [GET_ANIME_BANNER, malId],
+    enabled: !!malId,
   });
 };

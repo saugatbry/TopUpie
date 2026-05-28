@@ -1,7 +1,7 @@
 import { getCached, setCache } from "./cache";
 import { refreshProxies, getNextProxy } from "./proxy";
 import { getPreSeededEpisodeCount } from "@/data/episode-counts";
-import { getAnilistEpisodeCount } from "./anilist";
+import { getAnilistEpisodeCount, getAnilistBanners } from "./anilist";
 
 
 // Using Jikan API v4 - a reliable and well-maintained anime API
@@ -183,7 +183,7 @@ interface JikanAnime {
 }
 
 interface CommonAnime {
-  id: string; name: string; jname: string; poster: string;
+  id: string; name: string; jname: string; poster: string; banner?: string;
   episodes: { sub: number | null; dub: number | null };
   type: string; duration: string; rating: number | null; rank: number | null | undefined;
   description: string; genres: string[]; studios: string[];
@@ -288,15 +288,17 @@ export const hianime = {
 
       const animeList = allAnime.slice(0, 30);
 
-      // Split data for different sections
-      const spotlightAnimes = animeList
-        .slice(0, 5)
-        .map((anime, idx) => ({
-          ...anime,
-          description:
-            (trendingData[idx] || {}).synopsis || "No description available",
-          otherInfo: (trendingData[idx] || {}).genres || [],
-        }));
+      const spotlightSlice = animeList.slice(0, 5);
+      const malIds = spotlightSlice.map((a) => parseInt(a.id, 10)).filter((id) => id > 0);
+      const bannerMap = malIds.length > 0 ? await getAnilistBanners(malIds).catch(() => new Map()) : new Map();
+
+      const spotlightAnimes = spotlightSlice.map((anime, idx) => ({
+        ...anime,
+        banner: bannerMap.get(parseInt(anime.id, 10))?.bannerImage || undefined,
+        description:
+          (trendingData[idx] || {}).synopsis || "No description available",
+        otherInfo: (trendingData[idx] || {}).genres || [],
+      }));
 
       const latestEpisodeAnimes = animeList.slice(0, 20);
       const trendingAnimes = animeList.slice(0, 15);
@@ -412,14 +414,17 @@ export const hianime = {
         };
       });
 
+      const [bannerInfo] = await getAnilistBanners([a.mal_id]).then(m => [m.get(a.mal_id)]).catch(() => [undefined]);
+
       return {
         anime: {
           info: {
             id: String(a.mal_id),
-            anilistId: 0,
+            anilistId: bannerInfo?.id || 0,
             malId: a.mal_id,
             name: a.title_english || a.title || "Unknown",
             poster,
+            banner: bannerInfo?.bannerImage || undefined,
             description: a.synopsis || "",
             stats: {
               rating: String(a.score || ""),

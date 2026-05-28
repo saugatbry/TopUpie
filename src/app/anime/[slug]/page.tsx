@@ -78,9 +78,9 @@ const Page = () => {
     }
   }, [bookmarks]);
 
-  const anilistId = anime?.anime?.info?.anilistId;
+  const malId = anime?.anime?.info?.malId;
   const { data: banner, isLoading: bannerLoading } = useGetAnimeBanner(
-    anilistId ?? 0,
+    malId ?? 0,
   );
 
   const handleSelect = async (value: string) => {
@@ -128,13 +128,15 @@ const Page = () => {
         aired={anime.anime.moreInfo.aired}
       />
       <div className="w-full z-50">
-      <div className="h-[30vh] md:h-[40vh] w-full relative ">
+      <div className="h-[30vh] md:h-[40vh] w-full relative overflow-hidden">
         {bannerLoading ? (
           <div className="absolute inset-0 m-auto w-full h-full bg-slate-900 animate-pulse"></div>
         ) : (
           <Image
             src={
-              (banner?.Media.bannerImage as string) || anime.anime.info.poster
+              anime.anime.info.banner ||
+              (banner?.Media.bannerImage as string) ||
+              anime.anime.info.poster
             }
             alt={anime.anime.info.name}
             fill
@@ -147,7 +149,8 @@ const Page = () => {
         <WatchTrailer
           videoHref={anime.anime.info.promotionalVideos[0]?.source}
         />
-        <div className="absolute h-full w-full inset-0 m-auto bg-gradient-to-r from-slate-900 to-transparent"></div>
+        <div className="absolute h-full w-full inset-0 m-auto bg-gradient-to-r from-slate-900/90 via-slate-900/60 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-transparent to-transparent"></div>
       </div>
       <Container className="z-50 md:space-y-10 pb-20">
         <div className="flex md:mt-[-9.375rem] mt-[-6.25rem] md:flex-row flex-col md:items-end md:gap-20 gap-10 ">
