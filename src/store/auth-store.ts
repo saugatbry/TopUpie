@@ -1,3 +1,4 @@
+import React from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -39,5 +40,11 @@ export const useAuthStore = create<IAuthStore>()(
 );
 
 export const useAuthHydrated = () => {
-  return useAuthStore.persist.hasHydrated();
+  const [hydrated, setHydrated] = React.useState(false);
+  React.useEffect(() => {
+    const unsub = useAuthStore.persist.onFinishHydration(() => setHydrated(true));
+    if (useAuthStore.persist.hasHydrated()) setHydrated(true);
+    return () => unsub();
+  }, []);
+  return hydrated;
 };

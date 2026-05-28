@@ -11,8 +11,13 @@ export const useHasAnimeWatched = (
   const [hasWatchedEpisode, setHasWatchedEpisode] = useState(false);
 
   useEffect(() => {
-    const watchedDetails: Array<IWatchedAnime> =
-      JSON.parse(localStorage.getItem("watched") as string) || [];
+    let watchedDetails: Array<IWatchedAnime> = [];
+    try {
+      const stored = localStorage.getItem("watched");
+      if (stored) watchedDetails = JSON.parse(stored);
+    } catch {
+      localStorage.removeItem("watched");
+    }
 
     if (!Array.isArray(watchedDetails)) {
       localStorage.removeItem("watched");

@@ -31,11 +31,18 @@ const ContinueWatching = (props: Props) => {
   useEffect(() => {
     if (!auth) {
       if (typeof window !== "undefined") {
-        const storedData = localStorage.getItem("watched");
-        const watchedAnimes: {
+        let watchedAnimes: {
           anime: { id: string; title: string; poster: string };
           episodes: string[];
-        }[] = storedData ? JSON.parse(storedData) : [];
+        }[] = [];
+        try {
+          const storedData = localStorage.getItem("watched");
+          if (storedData) {
+            watchedAnimes = JSON.parse(storedData);
+          }
+        } catch {
+          localStorage.removeItem("watched");
+        }
 
         if (!Array.isArray(watchedAnimes)) {
           localStorage.removeItem("watched");

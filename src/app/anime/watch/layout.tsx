@@ -78,6 +78,8 @@ const Layout = (props: Props) => {
 
     if (episodeId) {
       setSelectedEpisode(episodeId);
+    } else if (currentAnimeId) {
+      setSelectedEpisode(`${currentAnimeId}-1`);
     }
   }, [currentAnimeId, episodeId, animeId, setSelectedEpisode]);
 
@@ -110,8 +112,8 @@ const Layout = (props: Props) => {
     try {
       await createOrUpdateBookMark(
         currentAnimeId as string,
-        anime?.anime.info.name!,
-        anime?.anime.info.poster!,
+        anime?.anime?.info?.name || "",
+        anime?.anime?.info?.poster || "",
         value,
       );
     } catch (error) {
@@ -128,7 +130,7 @@ const Layout = (props: Props) => {
   if (isLoading) return <Loading />;
 
   return (
-    anime?.anime.info && (
+    anime?.anime?.info && (
       <Container className="mt-[6.5rem] space-y-10 pb-20">
         <div className="grid lg:grid-cols-4 grid-cols-1 gap-y-5 gap-x-10 h-auto w-full">
           <div className="lg:col-span-3 col-span-1 lg:mb-0">
@@ -138,11 +140,11 @@ const Layout = (props: Props) => {
             <EpisodePlaylist
               animeId={animeId as string}
               title={
-                !!anime?.anime.info.name
+                anime?.anime?.info?.name
                   ? anime.anime.info.name
-                  : (anime?.anime.moreInfo.japanese as string)
+                  : (anime?.anime?.moreInfo?.japanese as string)
               }
-              subOrDub={anime?.anime.info.stats.episodes}
+              subOrDub={anime?.anime?.info?.stats?.episodes}
               episodes={episodes}
               isLoading={episodeLoading}
               bookmarks={bookmarks}

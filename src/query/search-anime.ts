@@ -13,7 +13,7 @@ const searchAnime = async (q: string) => {
     },
   });
 
-  return res.data.data.suggestions as ISuggestionAnime[];
+  return res.data.data as ISuggestionAnime[];
 };
 
 export const useSearchAnime = (query: string) => {

@@ -20,7 +20,7 @@ const SearchBar = ({
 }) => {
   const [searchValue, setSearchValue] = useState<string>("");
   const [isFocused, setIsFocused] = useState<boolean>(false);
-  const debouncedValue = useDebounce(searchValue, 1000);
+  const debouncedValue = useDebounce(searchValue, 300);
   const resultsRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
 

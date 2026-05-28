@@ -9,7 +9,9 @@ export async function GET(request: Request) {
     : new Date().toISOString().split("T")[0];
 
   try {
-    const data = await hianime.getEstimatedSchedule(formattedDate);
+    const estimated = await hianime.getEstimatedSchedule(formattedDate);
+    // Wrap the array into the expected shape { scheduledAnimes: [...] }
+    const data = { scheduledAnimes: Array.isArray(estimated) ? estimated : [] };
     return Response.json({ data });
   } catch (err) {
     console.log(err);

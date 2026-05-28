@@ -26,14 +26,6 @@ function AnimeSchedule() {
 
   const defaultTab = daysOfWeek.includes(currentDay) ? currentDay : "monday";
 
-  const selectedDate = useMemo(() => {
-    const date = getDateForWeekday(currentSelectedTab);
-    date.setDate(date.getDate() + 1); // idk why i had to add 1 day, but the schedule API returns the next day
-    return date.toLocaleDateString("en-US");
-  }, [currentSelectedTab, getDateForWeekday]);
-
-  const { isLoading, data } = useGetAnimeSchedule(selectedDate);
-
   function getDateForWeekday(targetDay: string) {
     const targetIndex = daysOfWeek.indexOf(targetDay);
     const date = new Date(currentDate);
@@ -41,6 +33,14 @@ function AnimeSchedule() {
     date.setDate(currentDate.getDate() + diff);
     return date;
   }
+
+  const selectedDate = useMemo(() => {
+    const date = getDateForWeekday(currentSelectedTab);
+    date.setDate(date.getDate() + 1);
+    return date.toLocaleDateString("en-US");
+  }, [currentSelectedTab]);
+
+  const { isLoading, data } = useGetAnimeSchedule(selectedDate);
 
   return (
     <Container className="flex flex-col gap-5 py-10 items-center lg:items-start">
@@ -71,9 +71,9 @@ function AnimeSchedule() {
             <TabsContent key={day} value={day}>
               {day === currentSelectedTab && (
                 <div className="flex flex-col gap-5 w-full p-4">
-                  {data?.scheduledAnimes.map((anime) => (
+                  {(data?.scheduledAnimes ?? []).map((anime, i) => (
                     <div
-                      key={anime.id}
+                      key={`${anime.id}-${i}`}
                       className="flex items-center justify-between"
                     >
                       <div className="flex items-center gap-x-5">

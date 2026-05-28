@@ -23,8 +23,8 @@ const geistSans = localFont({
 //   weight: "100 900",
 // });
 
-const APP_NAME = "Kitsune";
-const APP_DEFAULT_TITLE = "Kitsune | Anime Streaming";
+const APP_NAME = "TopUpie Anime";
+const APP_DEFAULT_TITLE = "TopUpie Anime";
 const APP_DESCRIPTION = "Stream your favourite anime with ease and no ads";
 
 export const metadata: Metadata = {
@@ -74,7 +74,7 @@ export default function RootLayout({
           gtag('config', 'G-X9RZ58XPH1');`}
         </Script>
         <PublicEnvScript />
-        <link rel="icon" href="/icon.png" type="image/png" sizes="192x192" />
+        <link rel="icon" href="https://i.ibb.co/kCDz26G/image-removebg-preview.png" type="image/png" sizes="192x192" />
       </head>
       <body
         className={`${geistSans.className} antialiased max-w-[100vw] overflow-x-hidden`}

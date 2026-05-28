@@ -48,12 +48,12 @@ export async function POST(
       if (!title || !title.english) {
         continue; // Skip if title is not available
       }
-      const anime = await hianime.searchSuggestions(title.english);
-      if (anime.suggestions.length > 0) {
+      const suggestions = await hianime.searchSuggestions(title.english);
+      if (suggestions.length > 0) {
         mappedAnimes.push({
-          id: anime.suggestions[0].id,
-          thumbnail: anime.suggestions[0].poster,
-          title: anime.suggestions[0].name,
+          id: suggestions[0].id,
+          thumbnail: suggestions[0].poster,
+          title: suggestions[0].name,
           status: status[provider as ProviderStatus][item.status as StatusType],
         });
       }

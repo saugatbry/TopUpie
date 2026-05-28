@@ -12,7 +12,12 @@ export function getFallbackServer(serversData: IEpisodeServers | undefined): {
   const preference = localStorage.getItem("serverPreference");
 
   if (preference) {
-    const parsedPreference = JSON.parse(preference) as Preference;
+    let parsedPreference: Preference | null = null;
+    try {
+      parsedPreference = JSON.parse(preference);
+    } catch {
+      localStorage.removeItem("serverPreference");
+    }
     if (parsedPreference?.key) {
       const serverList = serversData?.[parsedPreference.key];
       if (serverList && serverList[0]?.serverName) {

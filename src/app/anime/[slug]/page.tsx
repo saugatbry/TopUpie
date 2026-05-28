@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 
 import Container from "@/components/container";
@@ -68,24 +68,29 @@ const Page = () => {
     page: 1,
     per_page: 1,
   });
-  const [selected, setSelected] = useState(bookmarks?.[0]?.status || "");
+  const [selected, setSelected] = useState("");
 
+  useEffect(() => {
+    if (bookmarks?.[0]?.status) {
+      setSelected(bookmarks[0].status);
+    }
+  }, [bookmarks]);
+
+  const anilistId = anime?.anime?.info?.anilistId;
   const { data: banner, isLoading: bannerLoading } = useGetAnimeBanner(
-    anime?.anime.info.anilistId!,
+    anilistId ?? 0,
   );
 
   const handleSelect = async (value: string) => {
-    if (!auth) {
-      return;
-    }
+    if (!auth || !anime) return;
     const previousSelected = selected;
     setSelected(value);
 
     try {
       await createOrUpdateBookMark(
         slug as string,
-        anime?.anime.info.name!,
-        anime?.anime.info.poster!,
+        anime.anime.info.name,
+        anime.anime.info.poster,
         value,
       );
     } catch (error) {
@@ -204,7 +209,7 @@ const Page = () => {
                 <span>{anime.anime.moreInfo.status}</span>
 
                 <h3>Season</h3>
-                <span className="capitalize">{}</span>
+                <span className="capitalize">{anime.anime.moreInfo.premiered}</span>
 
                 <h3>Studios</h3>
                 <span>{anime.anime.moreInfo.studios}</span>

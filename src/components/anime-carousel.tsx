@@ -48,13 +48,9 @@ const AnimeCarousel = (props: Props) => {
       <Carousel className="w-full" setApi={setApi} opts={{}}>
         <CarouselContent className="w-full">
           {props.anime?.map((ani, idx) => (
-            <BlurFade key={idx} delay={idx * 0.05} inView>
-              <CarouselItem
-                key={idx}
-                className="lg:basis-[1/5] basis-[1/2] sm:basis-[1/3] md:basis-[1/4] xl:basis-[1/6] 2xl:basis-[1/7]"
-              >
+            <BlurFade key={`carousel-${idx}`} delay={idx * 0.05} inView>
+              <CarouselItem className="lg:basis-[1/5] basis-[1/2] sm:basis-[1/3] md:basis-[1/4] xl:basis-[1/6] 2xl:basis-[1/7]">
                 <AnimeCard
-                  key={idx}
                   title={ani.name}
                   subTitle={ani.type}
                   episodeCard

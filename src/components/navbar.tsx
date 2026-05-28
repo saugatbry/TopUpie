@@ -9,18 +9,15 @@ import { Separator } from "./ui/separator";
 
 import { nightTokyo } from "@/utils/fonts";
 import { ROUTES } from "@/constants/routes";
-import React, { ReactNode, useEffect, useState } from "react";
+import React, { ReactNode, useState } from "react";
 
 import SearchBar from "./search-bar";
-import { InfoIcon, MenuIcon, X } from "lucide-react";
+import { MenuIcon, X } from "lucide-react";
 import useScrollPosition from "@/hooks/use-scroll-position";
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from "./ui/sheet";
 import LoginPopoverButton from "./login-popover-button";
 import { useAuthStore } from "@/store/auth-store";
-import { pb } from "@/lib/pocketbase";
 import NavbarAvatar from "./navbar-avatar";
-import { toast } from "sonner";
-import { Alert, AlertTitle } from "@/components/ui/alert";
 
 const menuItems: Array<{ title: string; href?: string }> = [
   // {
@@ -43,45 +40,6 @@ const NavBar = () => {
   const { y } = useScrollPosition();
   const isHeaderFixed = true;
   const isHeaderSticky = y > 0;
-  const [hasSeenDomainChangeBanner, setHasSeenDomainChangeBanner] =
-    useState<boolean>(() => {
-      if (typeof window !== "undefined" && window.localStorage) {
-        return localStorage.getItem("seenDomainChangeBanner") === "true";
-      }
-      return true;
-    });
-
-  useEffect(() => {
-    const refreshAuth = async () => {
-      const auth_token = JSON.parse(
-        localStorage.getItem("pocketbase_auth") as string,
-      );
-      if (auth_token) {
-        try {
-          const user = await pb.collection("users").authRefresh();
-          if (user) {
-            auth.setAuth({
-              id: user.record.id,
-              email: user.record.email,
-              username: user.record.username,
-              avatar: user.record.avatar,
-              collectionId: user.record.collectionId,
-              collectionName: user.record.collectionName,
-              autoSkip: user.record.autoSkip,
-            });
-          }
-        } catch (e) {
-          console.error("Auth refresh error:", e);
-          localStorage.removeItem("pocketbase_auth");
-          auth.clearAuth();
-          toast.error("Login session expired.", {
-            style: { background: "red" },
-          });
-        }
-      }
-    };
-    refreshAuth();
-  }, []);
 
   return (
     <div
@@ -94,43 +52,19 @@ const NavBar = () => {
           : "",
       ])}
     >
-      {!hasSeenDomainChangeBanner && (
-        <Alert variant="default" className="text-amber-300 bg-opacity-5">
-          <AlertTitle className="font-bold flex items-center justify-center space-x-2">
-            <div className="flex items-center gap-2">
-              <InfoIcon size="20" />
-              <p>
-                The domain has been changed from <i>kitsunee.online</i>. Please
-                bookmark the new domain <i>kitsunee.moe</i>
-              </p>
-            </div>
-            <p
-              className="cursor-pointer"
-              onClick={() => {
-                localStorage.setItem("seenDomainChangeBanner", "true");
-                setHasSeenDomainChangeBanner(true);
-              }}
-            >
-              <i>
-                <u>Close</u>
-              </i>
-            </p>
-          </AlertTitle>
-        </Alert>
-      )}
       <Container className="flex items-center justify-between py-2 gap-20 ">
         <Link
           href={ROUTES.HOME}
           className="flex items-center gap-1 cursor-pointer"
         >
-          <Image src="/icon.png" alt="logo" width={70} height={70} />
+          <Image src="https://i.ibb.co/kCDz26G/image-removebg-preview.png" alt="logo" width={70} height={70} unoptimized />
           <h1
             className={cn([
               nightTokyo.className,
               "text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-gray-200 to-pink-600 tracking-widest",
             ])}
           >
-            Kitsunee
+            TopUpie Anime
           </h1>
         </Link>
 

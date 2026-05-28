@@ -38,8 +38,9 @@ const EpisodePlaylist = ({
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const episodeRefs = useRef<(HTMLDivElement | null)[]>([]);
 
+  const initialEnd = Math.min(50, episodes?.totalEpisodes ?? 50);
   const [currentGroup, setCurrentGroup] = useState(
-    `1 - ${Math.min(50, episodes?.totalEpisodes!)}`,
+    `1 - ${Number.isFinite(initialEnd) ? initialEnd : 50}`,
   );
   const [search, setSearch] = useState("");
 
@@ -186,7 +187,7 @@ const EpisodePlaylist = ({
                   variant={"list"}
                   episode={episode}
                   animeId={animeId}
-                  watchedEpisodes={bookmarks?.[0].expand.watchHistory}
+                  watchedEpisodes={bookmarks?.[0]?.expand?.watchHistory}
                 />
               </div>
             ))}

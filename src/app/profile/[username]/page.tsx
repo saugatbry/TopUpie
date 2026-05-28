@@ -5,7 +5,6 @@ import Avatar from "@/components/common/avatar";
 import { useAuthHydrated, useAuthStore } from "@/store/auth-store";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useRouter } from "next/navigation";
-import { pb } from "@/lib/pocketbase";
 import { toast } from "sonner";
 import Image from "next/image";
 import CoverImage from "@/assets/cover.png";
@@ -39,16 +38,15 @@ function ProfilePage() {
   ) => {
     const file = event.target.files?.[0];
     if (file) {
-      const res = await pb.collection("users").update(auth.id, {
-        avatar: file,
-      });
-
-      if (res) {
-        setAuth({ ...auth, avatar: res.avatar });
-        toast.success("Avatar updated successfully", {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string;
+        setAuth({ ...auth, avatar: dataUrl });
+        toast.success("Avatar updated successfully (local)", {
           style: { background: "green" },
         });
-      }
+      };
+      reader.readAsDataURL(file);
     }
   };
 

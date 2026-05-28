@@ -1,31 +1,48 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useAnimeStore } from "@/store/anime-store";
-// import dynamic from "next/dynamic";
 
 import { IWatchedAnime } from "@/types/watched-anime";
-// const KitsunePlayer = dynamic(() => import("@/components/kitsune-player"), {
-//   ssr: false,
-// });
 import { useGetEpisodeData } from "@/query/get-episode-data";
 import { useGetEpisodeServers } from "@/query/get-episode-servers";
+import { useGetAllEpisodes } from "@/query/get-all-episodes";
 import { getFallbackServer } from "@/utils/fallback-server";
-import { AlertCircleIcon, Captions, Mic } from "lucide-react";
-// import { Button } from "@/components/ui/button";
-// import { Switch } from "@/components/ui/switch";
-import { useAuthStore } from "@/store/auth-store";
-// import { pb } from "@/lib/pocketbase";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useSearchParams } from "next/navigation";
+import { Captions, Mic, StepForward } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
+
+const MEGAPLAY_BASE = "https://megaplay.buzz";
+
+function buildMegaPlayUrl(episodeId: string, language: string): string {
+  const malMatch = /^([0-9]+)-([0-9]+)$/.exec(episodeId);
+  if (malMatch) {
+    return `${MEGAPLAY_BASE}/stream/mal/${malMatch[1]}/${malMatch[2]}/${language}`;
+  }
+  return `${MEGAPLAY_BASE}/stream/s-2/${encodeURIComponent(episodeId)}/${language}`;
+}
 
 const VideoPlayerSection = () => {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const episodeId = searchParams.get("episode");
   const { selectedEpisode, anime } = useAnimeStore();
+  const animeId = anime?.anime?.info?.id;
 
   const { data: serversData } = useGetEpisodeServers(selectedEpisode);
+  const { data: episodesData } = useGetAllEpisodes(animeId ?? "");
+
+  const currentEpIndex = useMemo(() => {
+    if (!episodesData?.episodes) return -1;
+    return episodesData.episodes.findIndex(
+      (ep) => ep.episodeId === (episodeId || selectedEpisode),
+    );
+  }, [episodesData, episodeId, selectedEpisode]);
+
+  const nextEpisode = useMemo(() => {
+    if (currentEpIndex < 0 || !episodesData?.episodes) return null;
+    return episodesData.episodes[currentEpIndex + 1] || null;
+  }, [currentEpIndex, episodesData]);
 
   const [preferDub, setPreferDub] = useState<boolean>(() => {
     if (typeof window !== "undefined" && window.localStorage) {
@@ -36,9 +53,6 @@ const VideoPlayerSection = () => {
 
   const [serverName, setServerName] = useState<string>("");
   const [key, setKey] = useState<string>("");
-
-  const { auth } = useAuthStore();
-  // const [autoSkip, setAutoSkip] = useState<boolean>(auth?.autoSkip || false);
   const [watchedDetails, setWatchedDetails] = useState<Array<IWatchedAnime>>(
     [],
   );
@@ -91,64 +105,66 @@ const VideoPlayerSection = () => {
   const isUsingSub = !preferDub || !hasDub;
 
   useEffect(() => {
-    if (auth) return;
     if (!Array.isArray(watchedDetails)) {
       localStorage.removeItem("watched");
       return;
     }
 
-    if (episodeData) {
-      const existingAnime = watchedDetails.find(
-        (watchedAnime) => watchedAnime.anime.id === anime.anime.info.id,
-      );
+    const animeId = anime?.anime?.info?.id;
+    const animeName = anime?.anime?.info?.name;
+    const animePoster = anime?.anime?.info?.poster;
 
-      if (!existingAnime) {
-        // Add new anime entry if it doesn't exist
-        const updatedWatchedDetails = [
-          ...watchedDetails,
-          {
-            anime: {
-              id: anime.anime.info.id,
-              title: anime.anime.info.name,
-              poster: anime.anime.info.poster,
-            },
-            episodes: [selectedEpisode],
+    if (!episodeData || !animeId || !selectedEpisode) return;
+
+    const existingAnime = watchedDetails.find(
+      (watchedAnime) => watchedAnime.anime.id === animeId,
+    );
+
+    if (!existingAnime) {
+      const updatedWatchedDetails = [
+        ...watchedDetails,
+        {
+          anime: {
+            id: animeId,
+            title: animeName ?? "",
+            poster: animePoster ?? "",
           },
-        ];
-        localStorage.setItem("watched", JSON.stringify(updatedWatchedDetails));
+          episodes: [selectedEpisode],
+        },
+      ];
+      localStorage.setItem("watched", JSON.stringify(updatedWatchedDetails));
+      setWatchedDetails(updatedWatchedDetails);
+    } else {
+      const episodeAlreadyWatched =
+        existingAnime.episodes.includes(selectedEpisode);
+
+      if (!episodeAlreadyWatched) {
+        const updatedWatchedDetails = watchedDetails.map((watchedAnime) =>
+          watchedAnime.anime.id === animeId
+            ? {
+                ...watchedAnime,
+                episodes: [...watchedAnime.episodes, selectedEpisode],
+              }
+            : watchedAnime,
+        );
+
+        localStorage.setItem(
+          "watched",
+          JSON.stringify(updatedWatchedDetails),
+        );
         setWatchedDetails(updatedWatchedDetails);
-      } else {
-        // Update the existing anime entry
-        const episodeAlreadyWatched =
-          existingAnime.episodes.includes(selectedEpisode);
-
-        if (!episodeAlreadyWatched) {
-          // Add the new episode to the list
-          const updatedWatchedDetails = watchedDetails.map((watchedAnime) =>
-            watchedAnime.anime.id === anime.anime.info.id
-              ? {
-                  ...watchedAnime,
-                  episodes: [...watchedAnime.episodes, selectedEpisode],
-                }
-              : watchedAnime,
-          );
-
-          localStorage.setItem(
-            "watched",
-            JSON.stringify(updatedWatchedDetails),
-          );
-          setWatchedDetails(updatedWatchedDetails);
-        }
       }
     }
     //eslint-disable-next-line
-  }, [episodeData, selectedEpisode, auth]);
+  }, [episodeData, selectedEpisode, anime]);
 
   // /**
   // Temporary fallback player for now
   // **/
+  const activeEpisodeId = episodeId || selectedEpisode;
+
   return (
-    episodeId &&
+    activeEpisodeId &&
     serversData && (
       <>
         <div
@@ -157,13 +173,18 @@ const VideoPlayerSection = () => {
           }
         >
           <iframe
-            src={`https://megaplay.buzz/stream/s-2/${episodeId.split("?ep=")[1]}/${isUsingSub ? "sub" : "dub"}`}
+            src={
+              buildMegaPlayUrl(activeEpisodeId, isUsingSub ? "sub" : "dub") +
+              "?autoplay=1"
+            }
             width="100%"
             height="100%"
+            allow="autoplay; encrypted-media; fullscreen"
             allowFullScreen
+            sandbox="allow-scripts allow-same-origin allow-forms"
           ></iframe>
         </div>
-        <div className="flex space-x-3 p-2 bg-[#0f172a] items-center">
+        <div className="flex space-x-3 p-2 bg-[#0f172a] items-center flex-wrap gap-y-2">
           <p>Sub/Dub: </p>
           {!!(serversData.sub ?? []).length && (
             <Button
@@ -190,20 +211,23 @@ const VideoPlayerSection = () => {
               <Mic className={`${preferDub && "text-white"}`} />
             </Button>
           )}
-        </div>
-        <div className="mt-4 ">
-          <Alert variant="destructive" className="text-red-400">
-            <AlertTitle className="font-bold flex items-center space-x-2">
-              <AlertCircleIcon size="20" />
-              <p>Fallback Video Player Activated</p>
-            </AlertTitle>
-            <AlertDescription>
-              The original video source for this episode is currently
-              unavailable. A fallback player has been provided for your
-              convenience. We recommend using an ad blocker for a smoother
-              viewing experience.
-            </AlertDescription>
-          </Alert>
+
+          <div className="flex-1" />
+
+          {nextEpisode && (
+            <Button
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={() => {
+                const params = new URLSearchParams(searchParams.toString());
+                params.set("episode", nextEpisode.episodeId);
+                params.delete("type");
+                router.push(`/anime/watch?${params.toString()}`);
+              }}
+            >
+              <StepForward className="mr-1 h-4 w-4" />
+              Play Next (Ep {nextEpisode.number})
+            </Button>
+          )}
         </div>
       </>
     )

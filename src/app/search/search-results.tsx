@@ -28,7 +28,7 @@ const SearchResults = () => {
   const params = useAnimeSearchParams();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const displayPhrase = params.q.replace(/^"+|"+$/g, "").trim();
+  const displayPhrase = (params.q || "").replace(/^"+|"+$/g, "").trim();
 
   const { data: searchResults, isLoading } = useGetSearchAnimeResults(params);
 

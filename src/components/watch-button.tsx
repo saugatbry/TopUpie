@@ -21,7 +21,7 @@ const WatchButton = () => {
     <ButtonLink
       href={
         !hasWatchedAnime
-          ? `${ROUTES.WATCH}?anime=${animeId}`
+          ? `${ROUTES.WATCH}?anime=${animeId}&episode=${animeId}-1`
           : `${ROUTES.WATCH}?anime=${animeId}&episode=${latestEpisodeWatched}`
       }
       className="max-w-fit text-base"
