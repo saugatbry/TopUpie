@@ -37,12 +37,12 @@ export default function Home() {
       />
       {hasData && (
         <>
+          <ContinueWatching loading={isLoading} />
+
           <LatestEpisodesAnime
             loading={isLoading}
             latestEpisodes={(data?.latestEpisodeAnimes ?? []) as LatestCompletedAnime[]}
           />
-
-          <ContinueWatching loading={isLoading} />
 
           <FeaturedCollection
             loading={isLoading}

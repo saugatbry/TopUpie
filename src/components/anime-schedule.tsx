@@ -52,7 +52,7 @@ function AnimeSchedule() {
         value={currentSelectedTab}
         className="w-full"
       >
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="flex w-full overflow-x-auto gap-1 scrollbar-hide">
           {daysOfWeek.map((day) => (
             <TabsTrigger key={day} value={day}>
               {day.substring(0, 3).toUpperCase()} -{" "}
@@ -74,10 +74,10 @@ function AnimeSchedule() {
                   {(data?.scheduledAnimes ?? []).map((anime, i) => (
                     <div
                       key={`${anime.id}-${i}`}
-                      className="flex items-center justify-between"
+                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2 border-b border-slate-700 last:border-0"
                     >
-                      <div className="flex items-center gap-x-5">
-                        <h3 className="text-sm text-gray-300 font-semibold">
+                      <div className="flex items-center gap-x-3 sm:gap-x-5">
+                        <h3 className="text-xs sm:text-sm text-gray-300 font-semibold shrink-0">
                           {new Date(anime.airingTimestamp).toLocaleTimeString(
                             "en-US",
                             {
