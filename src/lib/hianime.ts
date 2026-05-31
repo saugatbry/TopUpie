@@ -65,6 +65,7 @@ interface JikanAnime {
   title_english?: string;
   title_japanese?: string;
   images: { jpg: { image_url: string; large_image_url?: string; small_image_url?: string } };
+  trailer?: { images?: { maximum_image_url?: string } };
   synopsis?: string;
   type?: string;
   episodes?: number;
@@ -127,7 +128,10 @@ export const hianime = {
       const popularList = popularData.slice(0, 25).map((a: JikanAnime, i: number) => mapJikanAnimeToCommon(a, i + 1));
       const allAnime = [...trendingList, ...upcomingList.filter((a: CommonAnime) => !trendingList.some((t: CommonAnime) => t.id === a.id)), ...popularList.filter((a: CommonAnime) => !trendingList.some((t: CommonAnime) => t.id === a.id) && !upcomingList.some((u: CommonAnime) => u.id === a.id))];
       const animeList = allAnime.slice(0, 30);
-      const spotlightAnimes = animeList.slice(0, 5).map((anime: CommonAnime, idx: number) => ({ ...anime, description: (trendingData[idx] || {}).synopsis || "No description available", otherInfo: (trendingData[idx] || {}).genres || [] }));
+      const spotlightAnimes = animeList.slice(0, 5).map((anime: CommonAnime, idx: number) => {
+        const jikan = trendingData[idx] || {};
+        return { ...anime, banner: jikan.trailer?.images?.maximum_image_url || "", description: jikan.synopsis || "No description available", otherInfo: jikan.genres?.map((g: any) => g.name) || [] };
+      });
       const latestEpisodeAnimes = animeList.slice(0, 20);
       const trendingAnimes = animeList.slice(0, 15);
       const topUpcomingAnimes = upcomingList.slice(0, 10);
