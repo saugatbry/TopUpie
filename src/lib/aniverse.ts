@@ -310,15 +310,18 @@ export const aniverse = {
     try {
       const data = await fetchJson(`${API_BASE}/stream?id=${encodeURIComponent(parsed.animeId)}&season=${parsed.season}&ep=${parsed.episode}`);
       const servers = data?.results || [];
-      const idx = serverId ? serverId - 1 : 0;
+      const idx = typeof serverId === 'number' && serverId >= 0 ? serverId : 0;
       const selected = servers[idx] || servers[0];
+
+      const embedUrl = selected?.embed || "";
+      const downloadUrl = selected?.download || "";
 
       return {
         headers: { Referer: "" },
         subtitles: [],
         intro: { start: 0, end: 0 },
         outro: { start: 0, end: 0 },
-        sources: [{ url: selected?.embed || "", type: "iframe" }],
+        sources: [{ url: embedUrl, type: "iframe" }],
         anilistID: 0,
         malID: 0,
       };

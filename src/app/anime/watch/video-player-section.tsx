@@ -166,7 +166,6 @@ const VideoPlayerSection = () => {
               height="100%"
               allow="autoplay; encrypted-media; fullscreen"
               allowFullScreen
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation"
             ></iframe>
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-400">

@@ -4,17 +4,18 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const episodeId = searchParams.get("animeEpisodeId") as string;
-    // const server = searchParams.get("server") as
-    //   | "hd-1"
-    //   | "hd-2"
-    //   | "megacloud"
-    //   | "streamsb"
-    //   | "streamtape";
+    const serverParam = searchParams.get("server");
     const category = searchParams.get("category") as "sub" | "dub" | "raw";
+
+    let serverId: number | undefined;
+    if (serverParam) {
+      const num = parseInt(serverParam.replace(/\D/g, ""), 10);
+      if (!isNaN(num)) serverId = num;
+    }
 
     const data = await hianime.getEpisodeSources(
       decodeURIComponent(episodeId),
-      undefined,
+      serverId,
       category,
     );
 
