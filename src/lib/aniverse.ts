@@ -53,7 +53,7 @@ export const aniverse = {
 
       const mappedResults = allResults.map((r: any, i: number) => mapResult(r, i + 1));
 
-      const spotlightAnimes = mappedResults.slice(0, 5).map((a: any, idx: number) => ({
+      const spotlightAnimes = mappedResults.slice(0, 5).map((a: any) => ({
         ...a,
         description: "",
         otherInfo: [],
@@ -180,7 +180,7 @@ export const aniverse = {
       const info = await this.getInfo(id);
       const totalSeasons = info.seasons.length;
 
-      let allEpisodes: any[] = [];
+      const allEpisodes: any[] = [];
       let totalEp = 0;
 
       for (let s = 1; s <= totalSeasons; s++) {

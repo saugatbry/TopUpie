@@ -29,7 +29,7 @@ export const hianime = {
     return aniverse.searchSuggestions(query);
   },
 
-  async getEstimatedSchedule(date?: string) {
+  async getEstimatedSchedule(_date?: string) {
     return aniverse.getEstimatedSchedule();
   },
 };

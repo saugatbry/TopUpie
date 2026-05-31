@@ -2,10 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { getMangaChapters, MangaChapter } from "@/lib/manga";
-import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api";
 import { BookOpen } from "lucide-react";
 import Loading from "@/app/loading";
+import { MangaChapter } from "@/lib/manga";
 
 const MangaDetailPage = () => {
   const { slug } = useParams();
@@ -16,10 +16,12 @@ const MangaDetailPage = () => {
   useEffect(() => {
     if (!slug) return;
     setLoading(true);
-    getMangaChapters(slug as string)
-      .then((data) => {
-        setMangaName(data.mangaName);
-        setChapters(data.chapters);
+    api
+      .get("/api/manga/chapters", { params: { name: slug as string } })
+      .then((res) => {
+        const d = res.data?.data;
+        setMangaName(d?.mangaName || (slug as string));
+        setChapters(d?.chapters || []);
       })
       .catch(() => {})
       .finally(() => setLoading(false));

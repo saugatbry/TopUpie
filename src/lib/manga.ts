@@ -1,20 +1,4 @@
-import { getCached, setCache } from "./cache";
-
 const API_BASE = "https://kageread-api.vercel.app/api";
-const CACHE_TIME = 3600;
-
-async function fetchJson(url: string): Promise<any> {
-  const cached = await getCached(url, CACHE_TIME);
-  if (cached) return cached;
-  const res = await fetch(url, {
-    headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
-    signal: AbortSignal.timeout(15000),
-  });
-  if (!res.ok) throw new Error(`API error: ${res.status}`);
-  const data = await res.json();
-  await setCache(url, data);
-  return data;
-}
 
 export interface MangaChapter {
   id: string;
@@ -29,7 +13,12 @@ export interface MangaChapterList {
 }
 
 export async function getMangaChapters(name: string, start = 1, end = 1000): Promise<MangaChapterList> {
-  const data = await fetchJson(`${API_BASE}/manga/chapters?name=${encodeURIComponent(name)}&start=${start}&end=${end}`);
+  const res = await fetch(`${API_BASE}/manga/chapters?name=${encodeURIComponent(name)}&start=${start}&end=${end}`, {
+    headers: { "User-Agent": "Mozilla/5.0" },
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  const data = await res.json();
   return {
     mangaName: data?.mangaName || name,
     chapters: (data?.chapters || []).map((ch: any) => ({
@@ -47,7 +36,12 @@ export interface ChapterImage {
 }
 
 export async function getChapterImages(url: string): Promise<ChapterImage[]> {
-  const data = await fetchJson(`${API_BASE}/manga/images?url=${encodeURIComponent(url)}`);
+  const res = await fetch(`${API_BASE}/manga/images?url=${encodeURIComponent(url)}`, {
+    headers: { "User-Agent": "Mozilla/5.0" },
+    signal: AbortSignal.timeout(20000),
+  });
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  const data = await res.json();
   const images = data?.images || data?.data || [];
   return images.map((img: any, i: number) => ({
     page: i + 1,

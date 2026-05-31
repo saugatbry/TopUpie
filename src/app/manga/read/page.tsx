@@ -2,10 +2,15 @@
 
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { getChapterImages, ChapterImage } from "@/lib/manga";
+import { api } from "@/lib/api";
 import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+
+interface ChapterImage {
+  page: number;
+  url: string;
+}
 
 const MangaReaderPage = () => {
   const searchParams = useSearchParams();
@@ -19,8 +24,9 @@ const MangaReaderPage = () => {
   useEffect(() => {
     if (!url) return;
     setLoading(true);
-    getChapterImages(url)
-      .then(setImages)
+    api
+      .get("/api/manga/images", { params: { url } })
+      .then((res) => setImages(res.data?.data || []))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [url]);
@@ -37,7 +43,7 @@ const MangaReaderPage = () => {
     <div className="min-h-screen bg-black">
       <div className="sticky top-0 z-50 bg-slate-900/90 backdrop-blur-sm border-b border-white/5 p-3 flex items-center justify-between">
         <Link
-          href={url ? `/?manga=${encodeURIComponent(url.split("/manga/")[1]?.split("/")[0] || "")}` : "/manga"}
+          href={`/manga/${encodeURIComponent(url.split("/manga/")[1]?.split("/")[0] || "")}`}
           className="text-sm text-gray-400 hover:text-white truncate max-w-[200px]"
         >
           {title}
