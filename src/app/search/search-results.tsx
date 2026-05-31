@@ -213,17 +213,29 @@ const SearchResults = () => {
       <div className="grid lg:grid-cols-5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 w-full gap-5 content-center">
         {searchResults?.animes.map((anime, idx) => (
           <BlurFade key={idx} delay={idx * 0.05} inView>
-            <AnimeCard
-              title={anime.name}
-              subTitle={anime.type}
-              poster={anime.poster}
-              href={`${ROUTES.ANIME_DETAILS}/${anime.id}`}
-              className="self-center justify-self-center"
-              showGenre={false}
-              episodeCard
-              sub={anime?.episodes?.sub}
-              dub={anime?.episodes?.dub}
-            />
+            <div className="relative self-center justify-self-center">
+              {anime.provider && (
+                <span className={cn([
+                  "absolute top-1 right-1 z-10 text-[9px] font-bold px-1.5 py-0.5 rounded-full",
+                  anime.provider === "hindi"
+                    ? "text-orange-400 bg-orange-500/80 border border-orange-500"
+                    : "text-pink-400 bg-pink-500/80 border border-pink-500",
+                ])}>
+                  {anime.provider === "hindi" ? "Hindi" : "S/D"}
+                </span>
+              )}
+              <AnimeCard
+                title={anime.name}
+                subTitle={anime.type}
+                poster={anime.poster}
+                href={`${ROUTES.ANIME_DETAILS}/${anime.id}`}
+                className="self-center justify-self-center"
+                showGenre={false}
+                episodeCard
+                sub={anime?.episodes?.sub}
+                dub={anime?.episodes?.dub}
+              />
+            </div>
           </BlurFade>
         ))}
       </div>

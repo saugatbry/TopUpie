@@ -99,10 +99,10 @@ const SearchBar = ({
               })}
 
             {searchResults?.map((anime) => (
-              <a key={anime.id} href={ROUTES.ANIME_DETAILS + "/" + anime.id}>
+              <a key={anime.id + (anime.provider || "")} href={ROUTES.ANIME_DETAILS + "/" + anime.id}>
                 <div
                   className="flex items-start gap-4 hover:bg-[#121212] rounded-md p-2 cursor-pointer"
-                  onClick={handleAnimeClick} // Clear search value on click
+                  onClick={handleAnimeClick}
                 >
                   <div className="h-[6.25rem] w-[5rem] overflow-hidden rounded-md flex-shrink-0">
                     <Image
@@ -114,9 +114,21 @@ const SearchBar = ({
                     />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <h3 className="line-clamp-2 text-sm">
-                      {!!anime.name ? anime.name : anime.jname}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="line-clamp-2 text-sm">
+                        {!!anime.name ? anime.name : anime.jname}
+                      </h3>
+                      {anime.provider && (
+                        <span className={cn([
+                          "text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0",
+                          anime.provider === "hindi"
+                            ? "text-orange-400 bg-orange-500/10 border border-orange-500"
+                            : "text-pink-400 bg-pink-500/10 border border-pink-500",
+                        ])}>
+                          {anime.provider === "hindi" ? "Hindi" : "Sub/Dub"}
+                        </span>
+                      )}
+                    </div>
                     <div>
                       <div className="text-sm">{anime.type}</div>
                       <p className="text-xs text-gray-300">
@@ -158,10 +170,10 @@ const SearchBar = ({
               })}
 
             {searchResults?.slice(0, 5).map((anime) => (
-              <Link key={anime.id} href={ROUTES.ANIME_DETAILS + "/" + anime.id}>
+              <Link key={anime.id + (anime.provider || "")} href={ROUTES.ANIME_DETAILS + "/" + anime.id}>
                 <div
                   className="flex items-center gap-2 hover:bg-[#121212] rounded-md p-1 cursor-pointer"
-                  onClick={handleAnimeClick} // Clear search value on click
+                  onClick={handleAnimeClick}
                 >
                   <div className="h-[2.5rem] w-[1.875rem] overflow-hidden rounded-md">
                     <Image
@@ -173,10 +185,20 @@ const SearchBar = ({
                     />
                   </div>
                   <div className="flex flex-col gap-2 text-sm">
-                    <h3>{!!anime.name ? anime.name : anime.jname}</h3>
-                    <div>
-                      <div className="text-xs">{anime.rank}</div>
+                    <div className="flex items-center gap-1">
+                      <h3>{!!anime.name ? anime.name : anime.jname}</h3>
+                      {anime.provider && (
+                        <span className={cn([
+                          "text-[10px] font-bold px-1 py-0.5 rounded-full shrink-0",
+                          anime.provider === "hindi"
+                            ? "text-orange-400 bg-orange-500/10 border border-orange-500"
+                            : "text-pink-400 bg-pink-500/10 border border-pink-500",
+                        ])}>
+                          {anime.provider === "hindi" ? "Hindi" : "S/D"}
+                        </span>
+                      )}
                     </div>
+                    <div className="text-xs">{anime.rank}</div>
                   </div>
                 </div>
               </Link>

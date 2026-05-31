@@ -17,6 +17,7 @@ import useScrollPosition from "@/hooks/use-scroll-position";
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from "./ui/sheet";
 import LoginPopoverButton from "./login-popover-button";
 import { useAuthStore } from "@/store/auth-store";
+import { useProviderStore } from "@/store/provider-store";
 import NavbarAvatar from "./navbar-avatar";
 
 const menuItems: Array<{ title: string; href?: string }> = [
@@ -32,6 +33,7 @@ const menuItems: Array<{ title: string; href?: string }> = [
 
 const NavBar = () => {
   const auth = useAuthStore();
+  const { provider, setProvider } = useProviderStore();
   const { y } = useScrollPosition();
   const isHeaderSticky = y > 0;
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
@@ -62,6 +64,17 @@ const NavBar = () => {
             TopUpie Anime
           </span>
         </Link>
+        <button
+          onClick={() => setProvider(provider === "subdub" ? "hindi" : "subdub")}
+          className={cn([
+            "text-xs font-bold px-2 py-1 rounded-full border transition-colors shrink-0",
+            provider === "hindi"
+              ? "border-orange-500 text-orange-400 bg-orange-500/10"
+              : "border-pink-500 text-pink-400 bg-pink-500/10",
+          ])}
+        >
+          {provider === "subdub" ? "Sub/Dub" : "Hindi"}
+        </button>
 
         <div className="hidden lg:flex items-center gap-10 ml-20">
           {menuItems.map((menu, idx) => (
@@ -93,6 +106,7 @@ const NavBar = () => {
 
 const MobileMenuSheet = ({ trigger }: { trigger: ReactNode }) => {
   const [open, setOpen] = useState<boolean>(false);
+  const { provider, setProvider } = useProviderStore();
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger>{trigger}</SheetTrigger>
@@ -116,6 +130,20 @@ const MobileMenuSheet = ({ trigger }: { trigger: ReactNode }) => {
                 {menu.title}
               </Link>
             ))}
+            <button
+              onClick={() => {
+                setProvider(provider === "subdub" ? "hindi" : "subdub");
+                setOpen(false);
+              }}
+              className={cn([
+                "text-sm font-bold px-3 py-1.5 rounded-full border transition-colors w-fit",
+                provider === "hindi"
+                  ? "border-orange-500 text-orange-400 bg-orange-500/10"
+                  : "border-pink-500 text-pink-400 bg-pink-500/10",
+              ])}
+            >
+              {provider === "subdub" ? "Sub/Dub" : "Hindi"}
+            </button>
             <Separator />
             <SearchBar onAnimeClick={() => setOpen(false)} />
           </div>
