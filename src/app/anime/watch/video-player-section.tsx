@@ -12,16 +12,6 @@ import { Captions, Mic, StepForward } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
-const MEGAPLAY_BASE = "https://megaplay.buzz";
-
-function buildMegaPlayUrl(episodeId: string, language: string): string {
-  const malMatch = /^([0-9]+)-([0-9]+)$/.exec(episodeId);
-  if (malMatch) {
-    return `${MEGAPLAY_BASE}/stream/mal/${malMatch[1]}/${malMatch[2]}/${language}`;
-  }
-  return `${MEGAPLAY_BASE}/stream/s-2/${encodeURIComponent(episodeId)}/${language}`;
-}
-
 const VideoPlayerSection = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -165,6 +155,13 @@ const VideoPlayerSection = () => {
   // **/
   const activeEpisodeId = episodeId || selectedEpisode;
 
+  const embedUrl = useMemo(() => {
+    if (episodeData?.sources?.[0]?.url) {
+      return episodeData.sources[0].url + (episodeData.sources[0].url.includes("?") ? "&" : "?") + "autoplay=1";
+    }
+    return "";
+  }, [episodeData]);
+
   return (
     activeEpisodeId &&
     serversData && (
@@ -174,17 +171,20 @@ const VideoPlayerSection = () => {
             "relative w-full h-auto aspect-video min-h-[20vh] sm:min-h-[30vh] md:min-h-[40vh] lg:min-h-[60vh] max-h-[500px] lg:max-h-[calc(100vh-150px)] bg-black overflow-hidden p-4"
           }
         >
-          <iframe
-            src={
-              buildMegaPlayUrl(activeEpisodeId, isUsingSub ? "sub" : "dub") +
-              "?autoplay=1"
-            }
-            width="100%"
-            height="100%"
-            allow="autoplay; encrypted-media; fullscreen"
-            allowFullScreen
-            sandbox="allow-scripts allow-same-origin allow-forms"
-          ></iframe>
+          {embedUrl ? (
+            <iframe
+              src={embedUrl}
+              width="100%"
+              height="100%"
+              allow="autoplay; encrypted-media; fullscreen"
+              allowFullScreen
+              sandbox="allow-scripts allow-same-origin allow-forms"
+            ></iframe>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-400">
+              Loading player...
+            </div>
+          )}
         </div>
         <div className="flex space-x-3 p-2 bg-[#0f172a] items-center flex-wrap gap-y-2">
           <p>Sub/Dub: </p>

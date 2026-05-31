@@ -20,19 +20,14 @@ import { useAuthStore } from "@/store/auth-store";
 import NavbarAvatar from "./navbar-avatar";
 
 const menuItems: Array<{ title: string; href?: string }> = [
-  // {
-  //   title: "Home",
-  //   href: ROUTES.HOME,
-  // },
-  // {
-  //   title: "Catalog",
-  // },
-  // {
-  //   title: "News",
-  // },
-  // {
-  //   title: "Collection",
-  // },
+  {
+    title: "Anime",
+    href: ROUTES.SEARCH,
+  },
+  {
+    title: "Manga",
+    href: ROUTES.MANGA,
+  },
 ];
 
 const NavBar = () => {

@@ -79,7 +79,7 @@ const Layout = (props: Props) => {
     if (episodeId) {
       setSelectedEpisode(episodeId);
     } else if (currentAnimeId) {
-      setSelectedEpisode(`${currentAnimeId}-1`);
+      setSelectedEpisode(`${currentAnimeId}-s1-ep1`);
     }
   }, [currentAnimeId, episodeId, animeId, setSelectedEpisode]);
 
