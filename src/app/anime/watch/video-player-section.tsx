@@ -11,15 +11,16 @@ import { getFallbackServer } from "@/utils/fallback-server";
 import { Captions, Mic, StepForward, Languages } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { api } from "@/lib/api";
 
+const MEGAPLAY_BASE = "https://megaplay.buzz";
 const ANIVERSE_STREAM_API = "https://aniverseapi.vercel.app/api/stream";
 
-type LangTab = "sub" | "dub" | "hindi";
-
-interface StreamServer {
-  server: string;
-  embed: string;
+function buildMegaPlayUrl(episodeId: string, language: string): string {
+  const malMatch = /^([0-9]+)-([0-9]+)$/.exec(episodeId);
+  if (malMatch) {
+    return `${MEGAPLAY_BASE}/stream/mal/${malMatch[1]}/${malMatch[2]}/${language}`;
+  }
+  return `${MEGAPLAY_BASE}/stream/s-2/${encodeURIComponent(episodeId)}/${language}`;
 }
 
 function slugify(text: string): string {
@@ -58,16 +59,25 @@ const VideoPlayerSection = () => {
     return episodesData.episodes[currentEpIndex + 1] || null;
   }, [currentEpIndex, episodesData]);
 
+  const [preferDub, setPreferDub] = useState<boolean>(() => {
+    if (typeof window !== "undefined" && window.localStorage) {
+      return localStorage.getItem("preferDub") === "true";
+    }
+    return false;
+  });
+
   const [serverName, setServerName] = useState<string>("");
   const [key, setKey] = useState<string>("");
   const [watchedDetails, setWatchedDetails] = useState<Array<IWatchedAnime>>(
     [],
   );
 
-  const [langTab, setLangTab] = useState<LangTab>("sub");
-  const [streamServers, setStreamServers] = useState<StreamServer[]>([]);
-  const [selectedEmbed, setSelectedEmbed] = useState<string>("");
-  const [streamLoading, setStreamLoading] = useState(false);
+  // Hindi Dub state
+  type Tab = "subdub" | "hindi";
+  const [activeTab, setActiveTab] = useState<Tab>("subdub");
+  const [hindiServers, setHindiServers] = useState<{ server: string; embed: string }[]>([]);
+  const [selectedHindiEmbed, setSelectedHindiEmbed] = useState("");
+  const [hindiAvailable, setHindiAvailable] = useState<boolean | null>(null);
 
   useEffect(() => {
     const { serverName, key } = getFallbackServer(serversData);
@@ -81,31 +91,38 @@ const VideoPlayerSection = () => {
     key,
   );
 
-  // Fetch stream servers from Aniverse API
+  const hasDub = !!(serversData?.dub ?? []).length;
+  const isUsingSub = !preferDub || !hasDub;
+
+  // Fetch Hindi dub servers from Aniverse API when Hindi tab is active
   useEffect(() => {
-    if (!animeTitle || !activeEpisode) return;
+    if (activeTab !== "hindi" || !animeTitle || !activeEpisode) return;
 
     const slug = slugify(animeTitle);
     const epNum = parseEpisodeNumber(activeEpisode);
 
-    setStreamLoading(true);
-    api
-      .get(ANIVERSE_STREAM_API, {
-        params: { id: slug, season: 1, ep: epNum },
-      })
-      .then((res) => {
-        const servers: StreamServer[] = res.data?.results || [];
-        setStreamServers(servers);
-        if (servers.length > 0) {
-          setSelectedEmbed(servers[0].embed);
+    setHindiAvailable(null);
+    setHindiServers([]);
+    setSelectedHindiEmbed("");
+
+    const tryFetch = async (season: number): Promise<boolean> => {
+      try {
+        const res = await fetch(`${ANIVERSE_STREAM_API}?id=${encodeURIComponent(slug)}&season=${season}&ep=${epNum}`);
+        const data = await res.json();
+        if (data?.results?.length > 0) {
+          setHindiServers(data.results);
+          setSelectedHindiEmbed(data.results[0].embed);
+          setHindiAvailable(true);
+          return true;
         }
-      })
-      .catch(() => {
-        setStreamServers([]);
-        setSelectedEmbed("");
-      })
-      .finally(() => setStreamLoading(false));
-  }, [animeTitle, activeEpisode]);
+      } catch {}
+      return false;
+    };
+
+    tryFetch(1).then((found) => {
+      if (!found) setHindiAvailable(false);
+    });
+  }, [activeTab, animeTitle, activeEpisode]);
 
   useEffect(() => {
     if (!Array.isArray(watchedDetails)) {
@@ -163,11 +180,7 @@ const VideoPlayerSection = () => {
 
   const activeEpisodeId = episodeId || selectedEpisode;
 
-  const langTabs: { key: LangTab; label: string; icon: React.ReactNode }[] = [
-    { key: "sub", label: "Sub", icon: <Captions className="h-4 w-4" /> },
-    { key: "dub", label: "Dub", icon: <Mic className="h-4 w-4" /> },
-    { key: "hindi", label: "Hindi Dub", icon: <Languages className="h-4 w-4" /> },
-  ];
+  const megaPlaySrc = buildMegaPlayUrl(activeEpisodeId, isUsingSub ? "sub" : "dub") + "?autoplay=1";
 
   return (
     activeEpisodeId &&
@@ -178,9 +191,22 @@ const VideoPlayerSection = () => {
             "relative w-full h-auto aspect-video min-h-[20vh] sm:min-h-[30vh] md:min-h-[40vh] lg:min-h-[60vh] max-h-[500px] lg:max-h-[calc(100vh-150px)] bg-black overflow-hidden p-4"
           }
         >
-          {selectedEmbed ? (
+          {activeTab === "subdub" ? (
             <iframe
-              src={selectedEmbed + (selectedEmbed.includes("?") ? "&" : "?") + "autoplay=1"}
+              src={megaPlaySrc}
+              width="100%"
+              height="100%"
+              allow="autoplay; encrypted-media; fullscreen"
+              allowFullScreen
+              sandbox="allow-scripts allow-same-origin allow-forms"
+            ></iframe>
+          ) : hindiAvailable === null ? (
+            <div className="w-full h-full flex items-center justify-center text-gray-400">
+              Loading Hindi dub servers...
+            </div>
+          ) : hindiAvailable ? (
+            <iframe
+              src={selectedHindiEmbed + (selectedHindiEmbed.includes("?") ? "&" : "?") + "autoplay=1"}
               width="100%"
               height="100%"
               allow="autoplay; encrypted-media; fullscreen"
@@ -189,7 +215,7 @@ const VideoPlayerSection = () => {
             ></iframe>
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-400">
-              {streamLoading ? "Loading player..." : "No player available"}
+              Hindi dub not available for this episode
             </div>
           )}
         </div>
@@ -197,30 +223,47 @@ const VideoPlayerSection = () => {
           {/* Language Tabs */}
           <div className="flex space-x-2 items-center flex-wrap">
             <p className="text-sm text-gray-400">Language:</p>
-            {langTabs.map((tab) => (
+            <Button
+              size="sm"
+              variant={activeTab === "subdub" && isUsingSub ? "default" : "outline"}
+              className={`flex items-center gap-1 ${activeTab === "subdub" && isUsingSub ? "bg-red-500 hover:bg-red-600" : ""}`}
+              onClick={() => { setActiveTab("subdub"); setPreferDub(false); localStorage.setItem("preferDub", "false"); }}
+            >
+              <Captions className="h-4 w-4" />
+              Sub
+            </Button>
+            {hasDub && (
               <Button
-                key={tab.key}
                 size="sm"
-                variant={langTab === tab.key ? "default" : "outline"}
-                className={`flex items-center gap-1 ${langTab === tab.key ? (tab.key === "hindi" ? "bg-purple-600 hover:bg-purple-700" : tab.key === "sub" ? "bg-red-500 hover:bg-red-600" : "bg-green-500 hover:bg-green-600") : ""}`}
-                onClick={() => setLangTab(tab.key)}
+                variant={activeTab === "subdub" && preferDub ? "default" : "outline"}
+                className={`flex items-center gap-1 ${activeTab === "subdub" && preferDub ? "bg-green-500 hover:bg-green-600" : ""}`}
+                onClick={() => { setActiveTab("subdub"); setPreferDub(true); localStorage.setItem("preferDub", "true"); }}
               >
-                {tab.icon}
-                {tab.label}
+                <Mic className="h-4 w-4" />
+                Dub
               </Button>
-            ))}
+            )}
+            <Button
+              size="sm"
+              variant={activeTab === "hindi" ? "default" : "outline"}
+              className={`flex items-center gap-1 ${activeTab === "hindi" ? "bg-purple-600 hover:bg-purple-700" : ""}`}
+              onClick={() => setActiveTab("hindi")}
+            >
+              <Languages className="h-4 w-4" />
+              Hindi Dub
+            </Button>
           </div>
-          {/* Server Options */}
-          {streamServers.length > 0 && (
+          {/* Hindi server options */}
+          {activeTab === "hindi" && hindiServers.length > 0 && (
             <div className="flex space-x-2 items-center flex-wrap">
               <p className="text-sm text-gray-400">Servers:</p>
-              {streamServers.map((s) => (
+              {hindiServers.map((s) => (
                 <Button
                   key={s.server}
                   size="sm"
-                  variant={selectedEmbed === s.embed ? "default" : "outline"}
+                  variant={selectedHindiEmbed === s.embed ? "default" : "outline"}
                   className="text-xs"
-                  onClick={() => setSelectedEmbed(s.embed)}
+                  onClick={() => setSelectedHindiEmbed(s.embed)}
                 >
                   {s.server.replace("options-", "Server ")}
                 </Button>
