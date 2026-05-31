@@ -13,7 +13,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
 const MEGAPLAY_BASE = "https://megaplay.buzz";
-const ANIVERSE_STREAM_API = "https://aniverseapi.vercel.app/api/stream";
 
 function buildMegaPlayUrl(episodeId: string, language: string): string {
   const malMatch = /^([0-9]+)-([0-9]+)$/.exec(episodeId);
@@ -94,7 +93,7 @@ const VideoPlayerSection = () => {
   const hasDub = !!(serversData?.dub ?? []).length;
   const isUsingSub = !preferDub || !hasDub;
 
-  // Fetch Hindi dub servers from Aniverse API when Hindi tab is active
+  // Fetch Hindi dub servers from Aniverse API (via internal proxy to avoid CORS)
   useEffect(() => {
     if (activeTab !== "hindi" || !animeTitle || !activeEpisode) return;
 
@@ -107,7 +106,7 @@ const VideoPlayerSection = () => {
 
     const tryFetch = async (season: number): Promise<boolean> => {
       try {
-        const res = await fetch(`${ANIVERSE_STREAM_API}?id=${encodeURIComponent(slug)}&season=${season}&ep=${epNum}`);
+        const res = await fetch(`/api/aniverse/stream?id=${encodeURIComponent(slug)}&season=${season}&ep=${epNum}`);
         const data = await res.json();
         if (data?.results?.length > 0) {
           setHindiServers(data.results);
