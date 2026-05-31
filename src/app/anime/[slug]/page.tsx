@@ -84,7 +84,7 @@ const Page = () => {
     malId ?? 0,
   );
   const animeTitle = anime?.anime?.info?.name;
-  const { data: malId } = useGetMalId(animeTitle ?? "");
+  const { data: searchMalId } = useGetMalId(animeTitle ?? "");
 
   const handleSelect = async (value: string) => {
     if (!auth || !anime) return;
@@ -170,7 +170,7 @@ const Page = () => {
               {anime.anime.info.name}
             </h1>
             <div className="flex items-center gap-5">
-              <WatchButton type="subdub" malId={malId ? String(malId) : null} />
+              <WatchButton type="subdub" malId={searchMalId ? String(searchMalId) : null} />
               <WatchButton type="hindi" />
               {auth && (
                 <Select
