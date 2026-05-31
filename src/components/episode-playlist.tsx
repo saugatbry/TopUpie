@@ -38,10 +38,17 @@ const EpisodePlaylist = ({
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const episodeRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  const initialEnd = Math.min(50, episodes?.totalEpisodes ?? 50);
+  const initialEnd = episodes?.totalEpisodes ? Math.min(50, episodes.totalEpisodes) : 0;
   const [currentGroup, setCurrentGroup] = useState(
-    `1 - ${Number.isFinite(initialEnd) ? initialEnd : 50}`,
+    initialEnd > 0 ? `1 - ${initialEnd}` : "",
   );
+
+  useEffect(() => {
+    if (episodes?.totalEpisodes && episodes.totalEpisodes > 0 && !currentGroup) {
+      const end = Math.min(50, episodes.totalEpisodes);
+      setCurrentGroup(`1 - ${end}`);
+    }
+  }, [episodes?.totalEpisodes]);
   const [search, setSearch] = useState("");
 
   const [start, end] = currentGroup.split(" - ").map(Number);

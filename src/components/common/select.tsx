@@ -25,18 +25,16 @@ type Props = {
 };
 
 function Select(props: Props) {
-  const value = props.options.find((option) => option.value === props.value);
+  const selected = props.options.find((o) => o.value === props.value);
 
   return (
-    <SelectCN defaultValue={props.value} onValueChange={props.onChange}>
+    <SelectCN value={props.value} onValueChange={props.onChange}>
       <SelectTrigger className={cn("w-[180px]", props.className)}>
-        {value?.icon ? (
-          <value.icon />
-        ) : props.placeholderIcon ? (
+        {selected?.icon ? (
+          <selected.icon />
+        ) : props.placeholderIcon && !selected ? (
           <props.placeholderIcon />
-        ) : (
-          <></>
-        )}
+        ) : null}
         <SelectValue placeholder={props.placeholder} />
       </SelectTrigger>
       <SelectContent className={cn("z-[101] text-sm", props.className)}>
