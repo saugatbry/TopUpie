@@ -12,7 +12,7 @@ import { Button } from "./ui/button";
 import Image from "next/image";
 
 import React from "react";
-import { ArrowLeft, ArrowRight, Captions, Mic } from "lucide-react";
+import { ArrowLeft, ArrowRight, Captions, Mic, Play } from "lucide-react";
 import Autoplay from "embla-carousel-autoplay";
 
 import { ROUTES } from "@/constants/routes";
@@ -54,21 +54,35 @@ const HeroSection = (props: IHeroSectionProps) => {
           {props.spotlightAnime.map((anime, index) => (
             <CarouselItem key={index} className="h-full pl-0">
               <div className="w-full h-full relative overflow-hidden">
-                <Image
-                  src={anime.poster}
-                  alt={anime.name}
-                  fill
-                  priority={index === 0}
-                  sizes="100vw"
-                  className="object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-900/50 to-transparent z-10"></div>
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/30 to-transparent z-10"></div>
+                {anime.banner ? (
+                  <Image
+                    src={anime.banner}
+                    alt={anime.name}
+                    fill
+                    priority={index === 0}
+                    sizes="100vw"
+                    className="object-cover"
+                  />
+                ) : (
+                  <Image
+                    src={anime.poster}
+                    alt={anime.name}
+                    fill
+                    priority={index === 0}
+                    sizes="100vw"
+                    className="object-cover"
+                  />
+                )}
+
+                <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-900/60 to-transparent z-10"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-900/30 to-transparent z-10"></div>
 
                 <div className="absolute inset-0 z-20 flex items-end md:items-center pb-12 md:pb-0">
                   <Container>
-                    <div className="max-w-xl space-y-3">
-                      <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-black leading-tight drop-shadow-lg">{anime.name}</h1>
+                    <div className="max-w-xl space-y-4">
+                      <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-black leading-tight drop-shadow-lg">
+                        {anime.name}
+                      </h1>
 
                       <div className="flex flex-row items-center flex-wrap gap-2">
                         {anime.episodes.sub && (
@@ -88,12 +102,20 @@ const HeroSection = (props: IHeroSectionProps) => {
                       <p className="text-sm sm:text-base line-clamp-3 text-gray-200 max-w-prose">
                         {stripHtml(anime.description || "")}
                       </p>
-                      <div className="flex items-center gap-4 pt-1">
+
+                      <div className="flex items-center gap-3 pt-1">
                         <ButtonLink
                           href={`${ROUTES.ANIME_DETAILS}/${anime.id}`}
                           className="h-10 px-6 text-sm sm:text-base bg-[#e9376b] text-white hover:bg-[#d62d5d] rounded-lg shadow-lg shadow-[#e9376b]/25"
                         >
+                          <Play className="h-4 w-4 mr-1.5 fill-current" />
                           Learn More
+                        </ButtonLink>
+                        <ButtonLink
+                          href={`${ROUTES.WATCH}?anime=${anime.id}&episode=${anime.id}-1`}
+                          className="h-10 px-5 text-sm sm:text-base bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 rounded-lg"
+                        >
+                          Watch Now
                         </ButtonLink>
                       </div>
                     </div>

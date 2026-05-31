@@ -32,6 +32,7 @@ export interface IAnime {
   name: string;
   jname: string;
   poster: string;
+  banner?: string;
   episodes: Episodes;
   type?: Type;
   rank?: number;
@@ -54,6 +55,7 @@ export interface SpotlightAnime {
   name: string;
   description: string;
   poster: string;
+  banner?: string;
   jname: string;
   episodes: Episodes;
   type: Type;

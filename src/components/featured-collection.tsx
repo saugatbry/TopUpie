@@ -2,6 +2,7 @@ import React from "react";
 import Container from "./container";
 import FeaturedCollectionCard from "./featured-collection-card";
 import { IAnime, LatestCompletedAnime } from "@/types/anime";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Props = {
   featuredAnime: [
@@ -33,16 +34,11 @@ const FeaturedCollection = ({ featuredAnime, loading }: Props) => {
 const LoadingSkeleton = () => {
   return (
     <Container className="flex flex-col gap-5 py-10 items-center lg:items-start ">
-      <div className="h-10 w-[15.625rem] animate-pulse bg-slate-700"></div>
+      <div className="h-8 w-44 animate-pulse rounded-md bg-secondary" />
       <div className="grid w-full gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        {[1, 1, 1].map((_, idx) => {
-          return (
-            <div
-              key={idx}
-              className="rounded-xl h-[15.625rem] w-[100%] md:h-[18.75rem] animate-pulse bg-slate-700"
-            ></div>
-          );
-        })}
+        {[1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-64 w-full rounded-xl" />
+        ))}
       </div>
     </Container>
   );
