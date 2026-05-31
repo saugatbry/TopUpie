@@ -8,7 +8,7 @@ import { useGetEpisodeData } from "@/query/get-episode-data";
 import { useGetEpisodeServers } from "@/query/get-episode-servers";
 import { useGetAllEpisodes } from "@/query/get-all-episodes";
 import { getFallbackServer } from "@/utils/fallback-server";
-import { Captions, Mic, StepForward } from "lucide-react";
+import { Captions, Globe, Mic, StepForward } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
@@ -16,13 +16,17 @@ const VideoPlayerSection = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const episodeId = searchParams.get("episode");
-  const { selectedEpisode, anime } = useAnimeStore();
+  const { selectedEpisode, anime, watchType } = useAnimeStore();
   const animeId = anime?.anime?.info?.id;
 
   const activeEpisode = episodeId || selectedEpisode;
+  const activeEpisodeId = activeEpisode;
 
   const { data: serversData } = useGetEpisodeServers(activeEpisode);
   const { data: episodesData } = useGetAllEpisodes(animeId ?? "");
+
+  const isMAL = animeId ? /^\d+$/.test(animeId) : false;
+  const isHindi = watchType === "hindi";
 
   const currentEpIndex = useMemo(() => {
     if (!episodesData?.episodes) return -1;
@@ -43,6 +47,8 @@ const VideoPlayerSection = () => {
     return true;
   });
 
+  const [hindiServerIndex, setHindiServerIndex] = useState<number>(0);
+
   const [serverName, setServerName] = useState<string>("");
   const [key, setKey] = useState<string>("");
   const [watchedDetails, setWatchedDetails] = useState<Array<IWatchedAnime>>(
@@ -55,44 +61,24 @@ const VideoPlayerSection = () => {
     setKey(key);
   }, [serversData]);
 
-  // useEffect(() => {
-  //   const storedSkip = localStorage.getItem("autoSkip");
-  //   if (!auth && storedSkip !== null) setAutoSkip(Boolean(storedSkip));
-  //
-  //   try {
-  //     const stored = localStorage.getItem("watched");
-  //     setWatchedDetails(JSON.parse(stored as string) || []);
-  //   } catch {
-  //     localStorage.removeItem("watched");
-  //   }
-  // }, []);
+  const hindiServers = useMemo(() => {
+    const all = serversData?.sub ?? [];
+    return all.length > 0 ? all : serversData?.dub ?? [];
+  }, [serversData]);
+
+  const selectedHindiServer = hindiServers[hindiServerIndex] || null;
+
+  const episodeDataKey = isHindi
+    ? selectedHindiServer?.serverName || ""
+    : serverName;
+  const episodeDataCategory = isHindi ? "sub" : key;
 
   const { data: episodeData } = useGetEpisodeData(
     selectedEpisode,
-    serverName,
-    key,
+    episodeDataKey,
+    episodeDataCategory,
   );
 
-  // function changeServer(serverName: string, key: string) {
-  //   setServerName(serverName);
-  //   setKey(key);
-  //   const preference = { serverName, key };
-  //   localStorage.setItem("serverPreference", JSON.stringify(preference));
-  // }
-  //
-  // async function onHandleAutoSkipChange(value: boolean) {
-  //   setAutoSkip(value);
-  //   if (!auth) {
-  //     localStorage.setItem("autoSkip", JSON.stringify(value));
-  //     return;
-  //   }
-  //   const res = await pb.collection("users").update(auth.id, {
-  //     autoSkip: value,
-  //   });
-  //   if (res) {
-  //     setAuth({ ...auth, autoSkip: value });
-  //   }
-  // }
   const hasDub = !!(serversData?.dub ?? []).length;
   const isUsingSub = !preferDub || !hasDub;
 
@@ -102,14 +88,14 @@ const VideoPlayerSection = () => {
       return;
     }
 
-    const animeId = anime?.anime?.info?.id;
+    const animeIdStore = anime?.anime?.info?.id;
     const animeName = anime?.anime?.info?.name;
     const animePoster = anime?.anime?.info?.poster;
 
-    if (!episodeData || !animeId || !selectedEpisode) return;
+    if (!episodeData || !animeIdStore || !selectedEpisode) return;
 
     const existingAnime = watchedDetails.find(
-      (watchedAnime) => watchedAnime.anime.id === animeId,
+      (watchedAnime) => watchedAnime.anime.id === animeIdStore,
     );
 
     if (!existingAnime) {
@@ -117,7 +103,7 @@ const VideoPlayerSection = () => {
         ...watchedDetails,
         {
           anime: {
-            id: animeId,
+            id: animeIdStore,
             title: animeName ?? "",
             poster: animePoster ?? "",
           },
@@ -132,7 +118,7 @@ const VideoPlayerSection = () => {
 
       if (!episodeAlreadyWatched) {
         const updatedWatchedDetails = watchedDetails.map((watchedAnime) =>
-          watchedAnime.anime.id === animeId
+          watchedAnime.anime.id === animeIdStore
             ? {
                 ...watchedAnime,
                 episodes: [...watchedAnime.episodes, selectedEpisode],
@@ -150,17 +136,19 @@ const VideoPlayerSection = () => {
     //eslint-disable-next-line
   }, [episodeData, selectedEpisode, anime]);
 
-  // /**
-  // Temporary fallback player for now
-  // **/
-  const activeEpisodeId = episodeId || selectedEpisode;
-
   const embedUrl = useMemo(() => {
     if (episodeData?.sources?.[0]?.url) {
       return episodeData.sources[0].url + (episodeData.sources[0].url.includes("?") ? "&" : "?") + "autoplay=1";
     }
     return "";
   }, [episodeData]);
+
+  const handleNextEpisode = () => {
+    if (!nextEpisode) return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("episode", nextEpisode.episodeId);
+    router.push(`/anime/watch?${params.toString()}`);
+  };
 
   return (
     activeEpisodeId &&
@@ -187,31 +175,56 @@ const VideoPlayerSection = () => {
           )}
         </div>
         <div className="flex space-x-3 p-2 bg-[#0f172a] items-center flex-wrap gap-y-2">
-          <p>Sub/Dub: </p>
-          {!!(serversData.sub ?? []).length && (
-            <Button
-              className={`${isUsingSub && "bg-red-500 hover:bg-red-600"}`}
-              size="icon"
-              onClick={() => {
-                localStorage.setItem("preferDub", "false");
-                setPreferDub(false);
-              }}
-            >
-              <Captions className={`${isUsingSub && "text-white"}`} />
-            </Button>
-          )}
+          {isHindi ? (
+            <>
+              <Globe className="text-orange-400" />
+              <span className="text-sm font-semibold text-orange-400 mr-2">
+                Hindi Dub
+              </span>
+              {hindiServers.map((server, i) => (
+                <Button
+                  key={i}
+                  size="sm"
+                  className={`text-xs uppercase font-bold ${
+                    hindiServerIndex === i
+                      ? "bg-orange-500 hover:bg-orange-600 text-white"
+                      : "bg-slate-700 hover:bg-slate-600"
+                  }`}
+                  onClick={() => setHindiServerIndex(i)}
+                >
+                  {server.serverName}
+                </Button>
+              ))}
+            </>
+          ) : (
+            <>
+              <p>Sub/Dub: </p>
+              {!!(serversData.sub ?? []).length && (
+                <Button
+                  className={`${isUsingSub && "bg-red-500 hover:bg-red-600"}`}
+                  size="icon"
+                  onClick={() => {
+                    localStorage.setItem("preferDub", "false");
+                    setPreferDub(false);
+                  }}
+                >
+                  <Captions className={`${isUsingSub && "text-white"}`} />
+                </Button>
+              )}
 
-          {hasDub && (
-            <Button
-              className={`${preferDub && "bg-green-500 hover:bg-green-600"}`}
-              size="icon"
-              onClick={() => {
-                localStorage.setItem("preferDub", "true");
-                setPreferDub(true);
-              }}
-            >
-              <Mic className={`${preferDub && "text-white"}`} />
-            </Button>
+              {hasDub && (
+                <Button
+                  className={`${preferDub && "bg-green-500 hover:bg-green-600"}`}
+                  size="icon"
+                  onClick={() => {
+                    localStorage.setItem("preferDub", "true");
+                    setPreferDub(true);
+                  }}
+                >
+                  <Mic className={`${preferDub && "text-white"}`} />
+                </Button>
+              )}
+            </>
           )}
 
           <div className="flex-1" />
@@ -219,12 +232,7 @@ const VideoPlayerSection = () => {
           {nextEpisode && (
             <Button
               className="bg-blue-600 hover:bg-blue-700"
-              onClick={() => {
-                const params = new URLSearchParams(searchParams.toString());
-                params.set("episode", nextEpisode.episodeId);
-                params.delete("type");
-                router.push(`/anime/watch?${params.toString()}`);
-              }}
+              onClick={handleNextEpisode}
             >
               <StepForward className="mr-1 h-4 w-4" />
               Play Next (Ep {nextEpisode.number})
@@ -234,77 +242,6 @@ const VideoPlayerSection = () => {
       </>
     )
   );
-
-  // if (
-  //   !selectedEpisode ||
-  //   !anime?.anime ||
-  //   isLoadingServers ||
-  //   isLoading ||
-  //   !serversData ||
-  //   !episodeData
-  // )
-  //   return (
-  //     <div className="h-auto aspect-video lg:max-h-[calc(100vh-150px)] min-h-[20vh] sm:min-h-[30vh] md:min-h-[40vh] lg:min-h-[60vh] w-full animate-pulse bg-slate-700 rounded-md"></div>
-  //   );
-  //
-  // return (
-  //   <div>
-  //     <KitsunePlayer
-  //       key={episodeData.sources?.[0].url}
-  //       episodeInfo={episodeData}
-  //       serversData={serversData}
-  //       animeInfo={{
-  //         id: anime.anime.info.id,
-  //         title: anime.anime.info.name,
-  //         image: anime.anime.info.poster,
-  //       }}
-  //       subOrDub={key as "sub" | "dub"}
-  //       autoSkip={autoSkip}
-  //     />
-  //     <div className="flex flex-row bg-[#0f172a]  items-start justify-between w-full p-5">
-  //       <div>
-  //         <div className="flex flex-row items-center space-x-5">
-  //           <Captions className="text-red-300" />
-  //           <p className="font-bold text-sm">SUB</p>
-  //           {(serversData.sub ?? []).map((s, i) => (
-  //             <Button
-  //               size="sm"
-  //               key={i}
-  //               className={`uppercase font-bold ${serverName === s.serverName && key === "sub" && "bg-red-300"}`}
-  //               onClick={() => changeServer(s.serverName, "sub")}
-  //             >
-  //               {s.serverName}
-  //             </Button>
-  //           ))}
-  //         </div>
-  //         {!!(serversData.dub ?? []).length && (
-  //           <div className="flex flex-row items-center space-x-5 mt-2">
-  //             <Mic className="text-green-300" />
-  //             <p className="font-bold text-sm">DUB</p>
-  //             {(serversData.dub ?? []).map((s, i) => (
-  //               <Button
-  //                 size="sm"
-  //                 key={i}
-  //                 className={`uppercase font-bold ${serverName === s.serverName && key === "dub" && "bg-green-300"}`}
-  //                 onClick={() => changeServer(s.serverName, "dub")}
-  //               >
-  //                 {s.serverName}
-  //               </Button>
-  //             ))}
-  //           </div>
-  //         )}
-  //       </div>
-  //       <div className="flex flex-row items-center space-x-2 text-sm">
-  //         <Switch
-  //           checked={autoSkip}
-  //           onCheckedChange={(e) => onHandleAutoSkipChange(e)}
-  //           id="auto-skip"
-  //         />
-  //         <p>Auto Skip</p>
-  //       </div>
-  //     </div>
-  //   </div>
-  // );
 };
 
 export default VideoPlayerSection;

@@ -60,7 +60,7 @@ const SelectOptions: ISelectOptions[] = [
 
 const Layout = (props: Props) => {
   const searchParams = useSearchParams();
-  const { setAnime, setSelectedEpisode } = useAnimeStore();
+  const { setAnime, setSelectedEpisode, setWatchType } = useAnimeStore();
   const router = useRouter();
 
   const currentAnimeId = useMemo(
@@ -68,8 +68,15 @@ const Layout = (props: Props) => {
     [searchParams],
   );
   const episodeId = searchParams.get("episode");
+  const watchType = searchParams.get("type") as "subdub" | "hindi" | null;
 
   const [animeId, setAnimeId] = useState<string | null>(currentAnimeId);
+
+  useEffect(() => {
+    if (watchType === "subdub" || watchType === "hindi") {
+      setWatchType(watchType);
+    }
+  }, [watchType, setWatchType]);
 
   useEffect(() => {
     if (currentAnimeId !== animeId) {

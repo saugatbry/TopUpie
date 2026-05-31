@@ -9,6 +9,7 @@ import AnimeCard from "@/components/anime-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import WatchButton from "@/components/watch-button";
+import { useGetMalId } from "@/query/get-mal-id";
 import { IAnime } from "@/types/anime";
 import AnimeCarousel from "@/components/anime-carousel";
 import AnimeEpisodes from "@/components/anime-episodes";
@@ -82,6 +83,8 @@ const Page = () => {
   const { data: banner, isLoading: bannerLoading } = useGetAnimeBanner(
     anilistId ?? 0,
   );
+  const animeTitle = anime?.anime?.info?.name;
+  const { data: malId } = useGetMalId(animeTitle ?? "");
 
   const handleSelect = async (value: string) => {
     if (!auth || !anime) return;
@@ -164,7 +167,8 @@ const Page = () => {
               {anime.anime.info.name}
             </h1>
             <div className="flex items-center gap-5">
-              <WatchButton />
+              <WatchButton type="subdub" malId={malId ? String(malId) : null} />
+              <WatchButton type="hindi" />
               {auth && (
                 <Select
                   placeholder="Add to list"

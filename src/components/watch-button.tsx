@@ -1,33 +1,43 @@
 "use client";
 
 import React from "react";
-import { CirclePlay } from "lucide-react";
+import { CirclePlay, Languages } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 
 import { usePathname } from "next/navigation";
 import { ButtonLink } from "./common/button-link";
-import { useHasAnimeWatched } from "@/hooks/use-is-anime-watched";
 
-import { useGetLastEpisodeWatched } from "@/hooks/use-get-last-episode-watched";
+type Props = {
+  type: "subdub" | "hindi";
+  malId?: string | null;
+};
 
-const WatchButton = () => {
+const WatchButton = ({ type, malId }: Props) => {
   const pathName = usePathname();
-  const animeId = pathName.split("/")[2];
+  const slug = pathName.split("/")[2];
 
-  const { hasWatchedAnime } = useHasAnimeWatched(animeId);
-  const latestEpisodeWatched = useGetLastEpisodeWatched(animeId);
+  if (type === "hindi") {
+    return (
+      <ButtonLink
+        href={`${ROUTES.WATCH}?anime=${slug}&episode=${slug}-s1-ep1&type=hindi`}
+        className="max-w-fit text-base"
+        LeftIcon={Languages}
+      >
+        Start Watching Hindi Dub
+      </ButtonLink>
+    );
+  }
+
+  const animeId = malId || slug;
+  const episodeId = malId ? `${malId}-1` : `${slug}-s1-ep1`;
 
   return (
     <ButtonLink
-      href={
-        !hasWatchedAnime
-          ? `${ROUTES.WATCH}?anime=${animeId}&episode=${animeId}-1`
-          : `${ROUTES.WATCH}?anime=${animeId}&episode=${latestEpisodeWatched}`
-      }
+      href={`${ROUTES.WATCH}?anime=${animeId}&episode=${episodeId}&type=subdub`}
       className="max-w-fit text-base"
       LeftIcon={CirclePlay}
     >
-      {hasWatchedAnime ? "Continue Watching" : "Start Watching"}
+      Start Watching Sub/Dub
     </ButtonLink>
   );
 };

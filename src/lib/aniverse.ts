@@ -1,6 +1,6 @@
 import { getCached, setCache } from "./cache";
 
-const API_BASE = "https://aniverseapi.vercel.app/api";
+const API_BASE = "https://hindisubanime-api.vercel.app/api";
 const CACHE_TIME = 3600;
 
 async function fetchJson(url: string): Promise<any> {
@@ -94,7 +94,7 @@ export const aniverse = {
 
       const poster = a.poster || "";
       const genres = Array.isArray(a.genres) ? a.genres : [];
-      const totalSeasons = parseInt(a.seasons) || 1;
+      const totalSeasons = a.totalSeasons || parseInt(a.seasons) || 1;
       const totalEpisodes = parseInt(a.episodes) || 0;
 
       return {
@@ -205,7 +205,7 @@ export const aniverse = {
 
       if (allEpisodes.length === 0) {
         try {
-          const epData = await fetchJson(`${API_BASE}/episode?id=${encodeURIComponent(id)}&season=1`);
+          const epData = await fetchJson(`${API_BASE}/episodes?id=${encodeURIComponent(id)}&season=1`);
           const epResults = epData?.results;
           if (epResults?.episodes) {
             for (const ep of epResults.episodes) {
