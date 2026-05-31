@@ -123,9 +123,11 @@ const SearchBar = ({
                           "text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0",
                           anime.provider === "hindi"
                             ? "text-orange-400 bg-orange-500/10 border border-orange-500"
-                            : "text-pink-400 bg-pink-500/10 border border-pink-500",
+                            : anime.provider === "both"
+                              ? "text-green-400 bg-green-500/10 border border-green-500"
+                              : "text-pink-400 bg-pink-500/10 border border-pink-500",
                         ])}>
-                          {anime.provider === "hindi" ? "Hindi" : "Sub/Dub"}
+                          {anime.provider === "hindi" ? "Hindi" : anime.provider === "both" ? "Sub/Dub+Hindi" : "Sub/Dub"}
                         </span>
                       )}
                     </div>
@@ -192,9 +194,11 @@ const SearchBar = ({
                           "text-[10px] font-bold px-1 py-0.5 rounded-full shrink-0",
                           anime.provider === "hindi"
                             ? "text-orange-400 bg-orange-500/10 border border-orange-500"
-                            : "text-pink-400 bg-pink-500/10 border border-pink-500",
+                            : anime.provider === "both"
+                              ? "text-green-400 bg-green-500/10 border border-green-500"
+                              : "text-pink-400 bg-pink-500/10 border border-pink-500",
                         ])}>
-                          {anime.provider === "hindi" ? "Hindi" : "S/D"}
+                          {anime.provider === "hindi" ? "Hindi" : anime.provider === "both" ? "S/D+Hindi" : "S/D"}
                         </span>
                       )}
                     </div>

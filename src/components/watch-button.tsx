@@ -8,22 +8,22 @@ import { usePathname } from "next/navigation";
 import { ButtonLink } from "./common/button-link";
 
 type Props = {
-  type: "subdub" | "hindi";
+  provider: "subdub" | "hindi";
   malId?: string | null;
 };
 
-const WatchButton = ({ type, malId }: Props) => {
+const WatchButton = ({ provider, malId }: Props) => {
   const pathName = usePathname();
   const slug = pathName.split("/")[2];
 
-  if (type === "hindi") {
+  if (provider === "hindi") {
     return (
       <ButtonLink
         href={`${ROUTES.WATCH}?anime=${slug}&episode=${slug}-s1-ep1&type=hindi`}
         className="max-w-fit text-base"
         LeftIcon={Languages}
       >
-        Start Watching Hindi Dub
+        Start Watching
       </ButtonLink>
     );
   }
@@ -37,7 +37,7 @@ const WatchButton = ({ type, malId }: Props) => {
       className="max-w-fit text-base"
       LeftIcon={CirclePlay}
     >
-      Start Watching Sub/Dub
+      Start Watching
     </ButtonLink>
   );
 };

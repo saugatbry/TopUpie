@@ -9,6 +9,7 @@ import AnimeCard from "@/components/anime-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import WatchButton from "@/components/watch-button";
+import { useProviderStore } from "@/store/provider-store";
 import { useGetMalId } from "@/query/get-mal-id";
 import { IAnime } from "@/types/anime";
 import AnimeCarousel from "@/components/anime-carousel";
@@ -66,6 +67,7 @@ const Page = () => {
   const { slug } = useParams();
   const { data: anime, isLoading } = useGetAnimeDetails(slug as string);
   const { auth } = useAuthStore();
+  const provider = useProviderStore((s) => s.provider);
   const { bookmarks, createOrUpdateBookMark } = useBookMarks({
     animeID: slug as string,
     page: 1,
@@ -170,8 +172,7 @@ const Page = () => {
               {anime.anime.info.name}
             </h1>
             <div className="flex items-center gap-5">
-              <WatchButton type="subdub" malId={searchMalId ? String(searchMalId) : null} />
-              <WatchButton type="hindi" />
+              <WatchButton provider={provider} malId={provider === 'subdub' && searchMalId ? String(searchMalId) : null} />
               {auth && (
                 <Select
                   placeholder="Add to list"

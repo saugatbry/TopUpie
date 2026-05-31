@@ -36,7 +36,7 @@ export interface IAnime {
   episodes: Episodes;
   type?: Type;
   rank?: number;
-  provider?: "subdub" | "hindi";
+  provider?: "subdub" | "hindi" | "both";
 }
 
 export interface IAnimeSearch {
@@ -48,7 +48,7 @@ export interface IAnimeSearch {
 
 export interface ISuggestionAnime extends IAnime {
   moreInfo: string[];
-  provider?: "subdub" | "hindi";
+  provider?: "subdub" | "hindi" | "both";
 }
 
 export interface SpotlightAnime {

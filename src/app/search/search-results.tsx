@@ -219,9 +219,11 @@ const SearchResults = () => {
                   "absolute top-1 right-1 z-10 text-[9px] font-bold px-1.5 py-0.5 rounded-full",
                   anime.provider === "hindi"
                     ? "text-orange-400 bg-orange-500/80 border border-orange-500"
-                    : "text-pink-400 bg-pink-500/80 border border-pink-500",
+                    : anime.provider === "both"
+                      ? "text-green-400 bg-green-500/80 border border-green-500"
+                      : "text-pink-400 bg-pink-500/80 border border-pink-500",
                 ])}>
-                  {anime.provider === "hindi" ? "Hindi" : "S/D"}
+                  {anime.provider === "hindi" ? "Hindi" : anime.provider === "both" ? "S/D+Hindi" : "S/D"}
                 </span>
               )}
               <AnimeCard

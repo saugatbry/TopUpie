@@ -3,6 +3,10 @@ import { searchMalId } from "@/lib/jikan";
 
 const JIKAN_API = "https://api.jikan.moe/v4";
 
+function normalizeTitle(title: string): string {
+  return title.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -33,7 +37,24 @@ export async function GET(request: Request) {
       provider: "hindi" as const,
     }));
 
-    const merged = [...jikanResults, ...hindiMapped].slice(0, 12);
+    const mergedMap = new Map<string, any>();
+
+    for (const item of jikanResults) {
+      mergedMap.set(normalizeTitle(item.name), { ...item });
+    }
+
+    for (const item of hindiMapped) {
+      const key = normalizeTitle(item.name);
+      if (mergedMap.has(key)) {
+        const existing = mergedMap.get(key);
+        existing.provider = "both" as const;
+        existing.name = existing.name.length >= item.name.length ? existing.name : item.name;
+      } else {
+        mergedMap.set(key, { ...item });
+      }
+    }
+
+    const merged = Array.from(mergedMap.values()).slice(0, 12);
 
     return Response.json({ data: merged });
   } catch (err) {

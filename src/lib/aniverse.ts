@@ -31,15 +31,35 @@ function parseEpisodeId(episodeId: string): { animeId: string; season: number; e
 export const aniverse = {
   async getHomePage() {
     try {
-      const [newAdded, searchData] = await Promise.all([
-        fetchJson(`${API_BASE}/newadded`),
-        fetchJson(`${API_BASE}/search?s=popular&page=1`).catch(() => ({ results: { results: [] } })),
+      const [homeData, newAdded, seriesData] = await Promise.all([
+        fetchJson(`${API_BASE}`).catch(() => ({ results: {} })),
+        fetchJson(`${API_BASE}/newadded`).catch(() => ({ results: [] })),
+        fetchJson(`${API_BASE}/series?page=1`).catch(() => ({ results: { results: [] } })),
       ]);
 
-      const newResults = newAdded?.results || [];
-      const searchResults = searchData?.results?.results || [];
+      const categories = homeData?.results || {};
+      const categoryResults: any[] = [];
+      for (const key of Object.keys(categories)) {
+        if (Array.isArray(categories[key])) {
+          categoryResults.push(...categories[key]);
+        }
+      }
 
-      const allResults = searchResults.length > 0 ? searchResults : newResults;
+      const newResults = newAdded?.results || [];
+      const seriesResults = seriesData?.results?.results || [];
+
+      const allResults = categoryResults.length > 0
+        ? categoryResults
+        : seriesResults.length > 0
+          ? seriesResults
+          : newResults;
+
+      const seen = new Set<string>();
+      const uniqueResults = allResults.filter((r: any) => {
+        if (!r.anime_id || seen.has(r.anime_id)) return false;
+        seen.add(r.anime_id);
+        return true;
+      });
 
       const mapResult = (item: any, rank: number) => ({
         id: item.anime_id || "",
@@ -51,7 +71,7 @@ export const aniverse = {
         rank,
       });
 
-      const mappedResults = allResults.map((r: any, i: number) => mapResult(r, i + 1));
+      const mappedResults = uniqueResults.map((r: any, i: number) => mapResult(r, i + 1));
 
       const spotlightAnimes = mappedResults.slice(0, 5).map((a: any) => ({
         ...a,
