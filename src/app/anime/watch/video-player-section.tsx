@@ -12,16 +12,6 @@ import { Captions, Mic, StepForward } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
-const MEGAPLAY_BASE = "https://megaplay.buzz";
-
-function buildMegaPlayUrl(episodeId: string, language: string): string {
-  const malMatch = /^([0-9]+)-([0-9]+)$/.exec(episodeId);
-  if (malMatch) {
-    return `${MEGAPLAY_BASE}/stream/mal/${malMatch[1]}/${malMatch[2]}/${language}`;
-  }
-  return `${MEGAPLAY_BASE}/stream/s-2/${encodeURIComponent(episodeId)}/${language}`;
-}
-
 const VideoPlayerSection = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -65,44 +55,12 @@ const VideoPlayerSection = () => {
     setKey(key);
   }, [serversData]);
 
-  // useEffect(() => {
-  //   const storedSkip = localStorage.getItem("autoSkip");
-  //   if (!auth && storedSkip !== null) setAutoSkip(Boolean(storedSkip));
-  //
-  //   try {
-  //     const stored = localStorage.getItem("watched");
-  //     setWatchedDetails(JSON.parse(stored as string) || []);
-  //   } catch {
-  //     localStorage.removeItem("watched");
-  //   }
-  // }, []);
-
   const { data: episodeData } = useGetEpisodeData(
     selectedEpisode,
     serverName,
     key,
   );
 
-  // function changeServer(serverName: string, key: string) {
-  //   setServerName(serverName);
-  //   setKey(key);
-  //   const preference = { serverName, key };
-  //   localStorage.setItem("serverPreference", JSON.stringify(preference));
-  // }
-  //
-  // async function onHandleAutoSkipChange(value: boolean) {
-  //   setAutoSkip(value);
-  //   if (!auth) {
-  //     localStorage.setItem("autoSkip", JSON.stringify(value));
-  //     return;
-  //   }
-  //   const res = await pb.collection("users").update(auth.id, {
-  //     autoSkip: value,
-  //   });
-  //   if (res) {
-  //     setAuth({ ...auth, autoSkip: value });
-  //   }
-  // }
   const hasDub = !!(serversData?.dub ?? []).length;
   const isUsingSub = !preferDub || !hasDub;
 
@@ -160,10 +118,14 @@ const VideoPlayerSection = () => {
     //eslint-disable-next-line
   }, [episodeData, selectedEpisode, anime]);
 
-  // /**
-  // Temporary fallback player for now
-  // **/
   const activeEpisodeId = episodeId || selectedEpisode;
+
+  const embedUrl = useMemo(() => {
+    if (episodeData?.sources?.[0]?.url) {
+      return episodeData.sources[0].url + (episodeData.sources[0].url.includes("?") ? "&" : "?") + "autoplay=1";
+    }
+    return "";
+  }, [episodeData]);
 
   return (
     activeEpisodeId &&
@@ -174,17 +136,20 @@ const VideoPlayerSection = () => {
             "relative w-full h-auto aspect-video min-h-[20vh] sm:min-h-[30vh] md:min-h-[40vh] lg:min-h-[60vh] max-h-[500px] lg:max-h-[calc(100vh-150px)] bg-black overflow-hidden p-4"
           }
         >
-          <iframe
-            src={
-              buildMegaPlayUrl(activeEpisodeId, isUsingSub ? "sub" : "dub") +
-              "?autoplay=1"
-            }
-            width="100%"
-            height="100%"
-            allow="autoplay; encrypted-media; fullscreen"
-            allowFullScreen
-            sandbox="allow-scripts allow-same-origin allow-forms"
-          ></iframe>
+          {embedUrl ? (
+            <iframe
+              src={embedUrl}
+              width="100%"
+              height="100%"
+              allow="autoplay; encrypted-media; fullscreen"
+              allowFullScreen
+              sandbox="allow-scripts allow-same-origin allow-forms"
+            ></iframe>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-400">
+              Loading player...
+            </div>
+          )}
         </div>
         <div className="flex space-x-3 p-2 bg-[#0f172a] items-center flex-wrap gap-y-2">
           <p>Sub/Dub: </p>
@@ -234,77 +199,6 @@ const VideoPlayerSection = () => {
       </>
     )
   );
-
-  // if (
-  //   !selectedEpisode ||
-  //   !anime?.anime ||
-  //   isLoadingServers ||
-  //   isLoading ||
-  //   !serversData ||
-  //   !episodeData
-  // )
-  //   return (
-  //     <div className="h-auto aspect-video lg:max-h-[calc(100vh-150px)] min-h-[20vh] sm:min-h-[30vh] md:min-h-[40vh] lg:min-h-[60vh] w-full animate-pulse bg-slate-700 rounded-md"></div>
-  //   );
-  //
-  // return (
-  //   <div>
-  //     <KitsunePlayer
-  //       key={episodeData.sources?.[0].url}
-  //       episodeInfo={episodeData}
-  //       serversData={serversData}
-  //       animeInfo={{
-  //         id: anime.anime.info.id,
-  //         title: anime.anime.info.name,
-  //         image: anime.anime.info.poster,
-  //       }}
-  //       subOrDub={key as "sub" | "dub"}
-  //       autoSkip={autoSkip}
-  //     />
-  //     <div className="flex flex-row bg-[#0f172a]  items-start justify-between w-full p-5">
-  //       <div>
-  //         <div className="flex flex-row items-center space-x-5">
-  //           <Captions className="text-red-300" />
-  //           <p className="font-bold text-sm">SUB</p>
-  //           {(serversData.sub ?? []).map((s, i) => (
-  //             <Button
-  //               size="sm"
-  //               key={i}
-  //               className={`uppercase font-bold ${serverName === s.serverName && key === "sub" && "bg-red-300"}`}
-  //               onClick={() => changeServer(s.serverName, "sub")}
-  //             >
-  //               {s.serverName}
-  //             </Button>
-  //           ))}
-  //         </div>
-  //         {!!(serversData.dub ?? []).length && (
-  //           <div className="flex flex-row items-center space-x-5 mt-2">
-  //             <Mic className="text-green-300" />
-  //             <p className="font-bold text-sm">DUB</p>
-  //             {(serversData.dub ?? []).map((s, i) => (
-  //               <Button
-  //                 size="sm"
-  //                 key={i}
-  //                 className={`uppercase font-bold ${serverName === s.serverName && key === "dub" && "bg-green-300"}`}
-  //                 onClick={() => changeServer(s.serverName, "dub")}
-  //               >
-  //                 {s.serverName}
-  //               </Button>
-  //             ))}
-  //           </div>
-  //         )}
-  //       </div>
-  //       <div className="flex flex-row items-center space-x-2 text-sm">
-  //         <Switch
-  //           checked={autoSkip}
-  //           onCheckedChange={(e) => onHandleAutoSkipChange(e)}
-  //           id="auto-skip"
-  //         />
-  //         <p>Auto Skip</p>
-  //       </div>
-  //     </div>
-  //   </div>
-  // );
 };
 
 export default VideoPlayerSection;
