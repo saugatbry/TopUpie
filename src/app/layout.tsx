@@ -99,7 +99,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://cdn.myanimelist.net" />
         <link rel="dns-prefetch" href="https://i.ibb.co" />
         <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-X9RZ58XPH1"
+          src="https://www.googletagmanager.com/gtag/js?id=G-C5ES6E3GFP"
           strategy="afterInteractive"
         />
         <Script id="google-analytics" strategy="afterInteractive">
@@ -108,7 +108,7 @@ export default function RootLayout({
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
 
-          gtag('config', 'G-X9RZ58XPH1');`}
+          gtag('config', 'G-C5ES6E3GFP');`}
         </Script>
         <PublicEnvScript />
         <link rel="icon" href="https://i.ibb.co/kCDz26G/image-removebg-preview.png" type="image/png" sizes="192x192" />
