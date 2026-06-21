@@ -69,8 +69,6 @@ function ProfilePage() {
             className="w-[150px] h-[150px] cursor-pointer"
             username={auth.username}
             url={auth.avatar}
-            collectionID={auth.collectionId}
-            id={auth.id}
             onClick={() => {
               if (fileInputRef.current) {
                 fileInputRef.current.click();

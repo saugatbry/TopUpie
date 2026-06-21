@@ -55,14 +55,21 @@ const AnimeCard = ({
           props.className,
         ])}
       >
-        <Image
-          src={props.poster}
-          alt={props.title || "Anime poster"}
-          fill
-          sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 20vw, 12.5rem"
-          className="object-cover"
-          loading="lazy"
-        />
+        {props.poster ? (
+          <Image
+            src={props.poster}
+            alt={props.title || "Anime poster"}
+            fill
+            unoptimized
+            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 20vw, 12.5rem"
+            className="object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-muted/20 text-muted-foreground">
+            <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.182 16.364A3.857 3.857 0 0012 14.773c-1.636 0-3.071.707-4.182 1.591M3 12a9 9 0 1118 0 9 9 0 01-18 0zm9-4.5a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" /></svg>
+          </div>
+        )}
         {displayDetails && (
           <>
             <div className="absolute inset-0 m-auto h-full w-full bg-gradient-to-t from-accent to-transparent"></div>
@@ -80,13 +87,13 @@ const AnimeCard = ({
               )}
               {props.episodeCard ? (
                 <div className="flex flex-row items-center space-x-2 ">
-                  {props.sub && (
+                  {props.sub != null && (
                     <Badge className="bg-red-200 flex flex-row items-center space-x-0.5">
                       <Captions size={"16"} />
                       <span>{props.sub}</span>
                     </Badge>
                   )}
-                  {props.dub && (
+                  {props.dub != null && (
                     <Badge className="bg-green-200 flex flex-row items-center space-x-0.5">
                       <Mic size={"16"} />
                       <span>{props.dub}</span>

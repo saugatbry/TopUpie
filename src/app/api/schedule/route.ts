@@ -8,13 +8,7 @@ export async function GET(request: Request) {
     ? new Date(date).toISOString().split("T")[0]
     : new Date().toISOString().split("T")[0];
 
-  try {
-    const estimated = await hianime.getEstimatedSchedule(formattedDate);
-    // Wrap the array into the expected shape { scheduledAnimes: [...] }
-    const data = { scheduledAnimes: Array.isArray(estimated) ? estimated : [] };
-    return Response.json({ data });
-  } catch (err) {
-    console.log(err);
-    return Response.json({ error: "something went wrong" }, { status: 500 });
-  }
+  const estimated = await hianime.getEstimatedSchedule(formattedDate).catch(() => []);
+  const data = { scheduledAnimes: Array.isArray(estimated) ? estimated : [] };
+  return Response.json({ data });
 }

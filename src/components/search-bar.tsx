@@ -10,7 +10,6 @@ import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import Tooltip from "./common/tooltip";
-
 const SearchBar = ({
   className,
   onAnimeClick,
@@ -48,7 +47,7 @@ const SearchBar = ({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && searchValue.trim()) {
       // Redirect to the search results page
-      router.push(`${ROUTES.SEARCH}?q=${encodeURIComponent(searchValue)}`);
+          router.push(`${ROUTES.SEARCH}?q=${encodeURIComponent(searchValue)}`);
       setIsFocused(false); // Hide the dropdown results
       if (onAnimeClick) {
         onAnimeClick();
@@ -73,7 +72,7 @@ const SearchBar = ({
         variant="secondary"
         className="absolute  text-white right-2 top-1/2 -translate-y-1/2 h-2/3"
         onClick={() => {
-          router.push(ROUTES.SEARCH + '?q=""');
+          router.push(`${ROUTES.SEARCH}?q=""`);
         }}
       >
         <Tooltip side="bottom" content="Filter">
@@ -99,7 +98,7 @@ const SearchBar = ({
               })}
 
             {searchResults?.map((anime) => (
-              <a key={anime.id + (anime.provider || "")} href={ROUTES.ANIME_DETAILS + "/" + anime.id}>
+              <a key={anime.id} href={ROUTES.ANIME_DETAILS + "/" + anime.id}>
                 <div
                   className="flex items-start gap-4 hover:bg-[#121212] rounded-md p-2 cursor-pointer"
                   onClick={handleAnimeClick}
@@ -118,18 +117,6 @@ const SearchBar = ({
                       <h3 className="line-clamp-2 text-sm">
                         {!!anime.name ? anime.name : anime.jname}
                       </h3>
-                      {anime.provider && (
-                        <span className={cn([
-                          "text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0",
-                          anime.provider === "hindi"
-                            ? "text-orange-400 bg-orange-500/10 border border-orange-500"
-                            : anime.provider === "both"
-                              ? "text-green-400 bg-green-500/10 border border-green-500"
-                              : "text-pink-400 bg-pink-500/10 border border-pink-500",
-                        ])}>
-                          {anime.provider === "hindi" ? "Hindi" : anime.provider === "both" ? "Sub/Dub+Hindi" : "Sub/Dub"}
-                        </span>
-                      )}
                     </div>
                     <div>
                       <div className="text-sm">{anime.type}</div>
@@ -145,7 +132,7 @@ const SearchBar = ({
               className="w-full"
               href={`${ROUTES.SEARCH}?q=${encodeURIComponent(searchValue)}`}
             >
-              <Button className="w-full bg-[#e9376b] text-white">
+              <Button className="w-full bg-[#3b82f6] text-white">
                 Show More
               </Button>
             </Link>
@@ -172,7 +159,7 @@ const SearchBar = ({
               })}
 
             {searchResults?.slice(0, 5).map((anime) => (
-              <Link key={anime.id + (anime.provider || "")} href={ROUTES.ANIME_DETAILS + "/" + anime.id}>
+              <Link key={anime.id} href={ROUTES.ANIME_DETAILS + "/" + anime.id}>
                 <div
                   className="flex items-center gap-2 hover:bg-[#121212] rounded-md p-1 cursor-pointer"
                   onClick={handleAnimeClick}
@@ -187,21 +174,7 @@ const SearchBar = ({
                     />
                   </div>
                   <div className="flex flex-col gap-2 text-sm">
-                    <div className="flex items-center gap-1">
-                      <h3>{!!anime.name ? anime.name : anime.jname}</h3>
-                      {anime.provider && (
-                        <span className={cn([
-                          "text-[10px] font-bold px-1 py-0.5 rounded-full shrink-0",
-                          anime.provider === "hindi"
-                            ? "text-orange-400 bg-orange-500/10 border border-orange-500"
-                            : anime.provider === "both"
-                              ? "text-green-400 bg-green-500/10 border border-green-500"
-                              : "text-pink-400 bg-pink-500/10 border border-pink-500",
-                        ])}>
-                          {anime.provider === "hindi" ? "Hindi" : anime.provider === "both" ? "S/D+Hindi" : "S/D"}
-                        </span>
-                      )}
-                    </div>
+                    <h3>{!!anime.name ? anime.name : anime.jname}</h3>
                     <div className="text-xs">{anime.rank}</div>
                   </div>
                 </div>

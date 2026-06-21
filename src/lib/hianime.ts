@@ -1,276 +1,229 @@
-import { aniverse } from "./aniverse";
-import { getJikanInfo } from "./jikan";
-import { getPreSeededEpisodeCount } from "@/data/episode-counts";
-import { getCached, setCache } from "./cache";
+import { animeService, searchService, homeService, scheduleService } from "@/services/aniforge";
+import type { IAnimeData, IAnimeSearch, ISuggestionAnime, Top10Animes, TopUpcomingAnime } from "@/types/anime";
+import type { IAnimeDetails } from "@/types/anime-details";
+import type { IEpisodes } from "@/types/episodes";
 
-const JIKAN_API = "https://api.jikan.moe/v4";
-const MEGAPLAY_BASE = "https://megaplay.buzz";
-const isMAL = (id: string) => /^\d+$/.test(id);
-const isMALEpsiode = (id: string) => /^\d+-\d+$/.test(id);
-const CACHE_TIME = 3600;
-
-function parseMALEpisode(episodeId: string): { malId: string; ep: string } | null {
-  const match = /^(\d+)-(\d+)$/.exec(episodeId);
-  return match ? { malId: match[1], ep: match[2] } : null;
+function unwrap<T>(res: any): T {
+  return (res?.results ?? res) as T;
 }
 
-let lastRequestTime = 0;
-let requestCount = 0;
-let windowStart = Date.now();
-
-async function doFetch(url: string): Promise<Response> {
-  const headers = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" };
-  return fetch(url, { headers, signal: AbortSignal.timeout(15000) });
+function cleanSlug(slug: string): string {
+  return slug?.split("/")[0] || slug || "";
 }
 
-async function rateLimitedFetch(url: string, retries = 3): Promise<any> {
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    const now = Date.now();
-    if (now - windowStart > 1000) { requestCount = 0; windowStart = now; }
-    if (requestCount >= 3) {
-      await new Promise((r) => setTimeout(r, 1000 - (now - windowStart)));
-      requestCount = 0; windowStart = Date.now();
-    }
-    const timeSinceLastRequest = now - lastRequestTime;
-    if (timeSinceLastRequest < 450) await new Promise((r) => setTimeout(r, 450 - timeSinceLastRequest));
-    lastRequestTime = Date.now(); requestCount++;
-    try {
-      const response = await doFetch(url);
-      if (response.status === 429) {
-        const retryAfter = parseInt(response.headers.get("Retry-After") || "2", 10);
-        await new Promise((r) => setTimeout(r, Math.min(retryAfter * 1000, 5000)));
-        continue;
-      }
-      if (!response.ok) throw new Error(`API error: ${response.status}`);
-      return await response.json();
-    } catch (error: any) {
-      if (attempt < retries) continue;
-      throw error;
-    }
-  }
-}
-
-async function fetchWithCache(url: string): Promise<any> {
-  const cached = await getCached(url, CACHE_TIME);
-  if (cached) return cached;
-  const data = await rateLimitedFetch(url);
-  if (!data || !data.data) throw new Error("Empty API response");
-  await setCache(url, data);
-  return data;
-}
-
-interface JikanAnime {
-  mal_id: number;
-  title: string;
-  title_english?: string;
-  title_japanese?: string;
-  images: { jpg: { image_url: string; large_image_url?: string; small_image_url?: string } };
-  trailer?: { images?: { maximum_image_url?: string } };
-  synopsis?: string;
-  type?: string;
-  episodes?: number;
-  score?: number;
-  rank?: number;
-  genres?: Array<{ mal_id: number; type: string; name: string }>;
-  studios?: Array<{ mal_id: number; type: string; name: string }>;
-  status?: string;
-  year?: number;
-  season?: string;
-}
-
-interface CommonAnime {
-  id: string; name: string; jname: string; poster: string;
-  episodes: { sub: number | null; dub: number | null };
-  type: string; duration: string; rating: number | null; rank: number | null | undefined;
-  description: string; genres: string[]; studios: string[];
-  status: string; year: number | null | undefined; season: string | null | undefined;
-}
-
-function mapJikanAnimeToCommon(anime: JikanAnime, rank?: number): CommonAnime {
+function mapAnimeItem(item: any) {
+  const slug = cleanSlug(item.slug);
   return {
-    id: String(anime.mal_id),
-    name: anime.title_english || anime.title || "Unknown Title",
-    jname: anime.title_japanese || anime.title || "Unknown",
-    poster: anime.images.jpg.large_image_url || anime.images.jpg.image_url || "",
-    episodes: { sub: anime.episodes || null, dub: null },
-    type: anime.type || "TV",
-    duration: "24m",
-    rating: anime.score || null,
-    rank: rank || anime.rank,
-    description: anime.synopsis || "",
-    genres: anime.genres?.map((g) => g.name) || [],
-    studios: anime.studios?.map((s) => s.name) || [],
-    status: anime.status || "Unknown",
-    year: anime.year,
-    season: anime.season,
+    id: slug || item.id?.toString() || "",
+    name: item.title || item.name || "Unknown",
+    jname: item.japaneseTitle || "",
+    poster: item.poster || item.images?.poster || "",
+    episodes: { sub: item.sub ?? null, dub: item.dub ?? null },
+    type: typeof item.type === "string" ? item.type : item.type?.name || "TV",
+    rank: item.rank ?? (item.rating ? parseFloat(item.rating) : null),
   };
 }
 
-export const hianime = {
-  async getHomePage() {
-    try {
-      const fetchSafe = async (url: string) => {
-        try { return await fetchWithCache(url); } catch { return { data: [] }; }
-      };
-      const [topAiring, topUpcoming, topPopular] = await Promise.all([
-        fetchSafe(`${JIKAN_API}/top/anime?filter=airing&limit=25&page=1`),
-        fetchSafe(`${JIKAN_API}/seasons/now?limit=25&page=1`),
-        fetchSafe(`${JIKAN_API}/top/anime?filter=bypopularity&limit=25&page=1`),
-      ]);
-      const trendingData = topAiring.data || [];
-      const upcomingData = topUpcoming.data || [];
-      const popularData = topPopular.data || [];
-      if (trendingData.length === 0 && upcomingData.length === 0) {
-        return { spotlightAnimes: [], trendingAnimes: [], latestEpisodeAnimes: [], topUpcomingAnimes: [], top10Animes: { today: [], week: [], month: [] }, topAiringAnimes: [], mostPopularAnimes: [], mostFavoriteAnimes: [], latestCompletedAnimes: [], genres: [] };
-      }
-      const trendingList = trendingData.slice(0, 25).map((a: JikanAnime, i: number) => mapJikanAnimeToCommon(a, i + 1));
-      const upcomingList = upcomingData.slice(0, 25).map((a: JikanAnime, i: number) => mapJikanAnimeToCommon(a, i + 1));
-      const popularList = popularData.slice(0, 25).map((a: JikanAnime, i: number) => mapJikanAnimeToCommon(a, i + 1));
-      const allAnime = [...trendingList, ...upcomingList.filter((a: CommonAnime) => !trendingList.some((t: CommonAnime) => t.id === a.id)), ...popularList.filter((a: CommonAnime) => !trendingList.some((t: CommonAnime) => t.id === a.id) && !upcomingList.some((u: CommonAnime) => u.id === a.id))];
-      const animeList = allAnime.slice(0, 30);
-      const spotlightAnimes = animeList.slice(0, 5).map((anime: CommonAnime, idx: number) => {
-        const jikan = trendingData[idx] || {};
-        return { ...anime, banner: jikan.trailer?.images?.maximum_image_url || "", description: jikan.synopsis || "No description available", otherInfo: jikan.genres?.map((g: any) => g.name) || [] };
-      });
-      const latestEpisodeAnimes = animeList.slice(0, 20);
-      const trendingAnimes = animeList.slice(0, 15);
-      const topUpcomingAnimes = upcomingList.slice(0, 10);
-      const mostPopularAnimes = popularList.slice(0, 15);
-      const mostFavoriteAnimes = animeList.sort((a: CommonAnime, b: CommonAnime) => (b.rating || 0) - (a.rating || 0)).slice(0, 15);
-      const latestCompletedAnimes = animeList.slice(15, 30);
-      const allGenres = new Set<string>();
-      animeList.forEach((anime: CommonAnime) => { (anime.genres || []).forEach((g: string) => allGenres.add(g)); });
-      return { spotlightAnimes, trendingAnimes, latestEpisodeAnimes, topUpcomingAnimes, top10Animes: { today: latestEpisodeAnimes.slice(0, 10), week: trendingAnimes.slice(0, 10), month: mostPopularAnimes.slice(0, 10) }, topAiringAnimes: trendingList.slice(0, 15), mostPopularAnimes, mostFavoriteAnimes, latestCompletedAnimes, genres: Array.from(allGenres) };
-    } catch (error) {
-      console.error("Error fetching home page:", error);
-      return { spotlightAnimes: [], trendingAnimes: [], latestEpisodeAnimes: [], topUpcomingAnimes: [], top10Animes: { today: [], week: [], month: [] }, topAiringAnimes: [], mostPopularAnimes: [], mostFavoriteAnimes: [], latestCompletedAnimes: [], genres: [] };
-    }
-  },
+function mapSpotlight(item: any) {
+  return {
+    rank: item.rank ?? 0,
+    id: cleanSlug(item.slug) || item.id?.toString() || "",
+    name: item.title || "Unknown",
+    description: item.description || "",
+    poster: item.poster || "",
+    banner: item.backgroundImage || item.banner || "",
+    jname: item.japaneseTitle || "",
+    episodes: { sub: item.sub ?? null, dub: item.dub ?? null },
+    type: typeof item.type === "string" ? item.type : item.type?.name || "TV",
+    otherInfo: [item.rating || "", item.quality || "", item.date || ""].filter(Boolean),
+  };
+}
 
-  async getInfo(id: string) {
-    if (isMAL(id)) {
-      const a = await getJikanInfo(id);
-      if (!a) throw new Error("Anime not found");
-      return {
-        anime: {
-          info: {
-            id: String(a.mal_id),
-            anilistId: 0,
-            malId: a.mal_id,
-            name: a.title_english || a.title || "Unknown",
-            poster: a.images?.jpg?.large_image_url || a.images?.jpg?.image_url || "",
-            description: a.synopsis || "",
-            stats: {
-              rating: String(a.score || ""),
-              quality: "HD",
-              episodes: { sub: a.episodes || 0, dub: 0 },
-              type: a.type || "TV",
-              duration: a.duration || "",
-            },
-            promotionalVideos: [],
-            charactersVoiceActors: [],
-          },
-          moreInfo: {
-            japanese: a.title_japanese || "",
-            synonyms: a.title || "",
-            aired: a.aired?.string || "",
-            premiered: `${a.season || ""} ${a.year || ""}`.trim(),
-            duration: a.duration || "",
-            status: a.status || "",
-            malscore: String(a.score || ""),
-            genres: (a.genres || []).map((g: any) => g.name),
-            studios: (a.studios || []).map((s: any) => s.name).join(", "),
-            producers: (a.producers || []).map((p: any) => p.name),
-          },
+async function getHomeData(): Promise<IAnimeData> {
+  try {
+    const [homeRes, trendingRes, popularRes, favRes, newlyRes, newReleaseRes, movieRes, tvRes, ovaRes, onaRes, specialRes, top10Res] = await Promise.all([
+      homeService.getHome(),
+      homeService.getTrending().catch(() => ({ results: [] })),
+      homeService.getMostPopular(1).catch(() => ({ results: { data: [] } })),
+      homeService.getMostPopular(2).catch(() => ({ results: { data: [] } })),
+      homeService.getRecentlyAdded(1).catch(() => ({ results: { data: [] } })),
+      homeService.getRecentlyUpdated(1).catch(() => ({ results: { data: [] } })),
+      homeService.getMovies().catch(() => ({ results: { data: [] } })),
+      homeService.getTV().catch(() => ({ results: { data: [] } })),
+      homeService.getOVA().catch(() => ({ results: { data: [] } })),
+      homeService.getONA().catch(() => ({ results: { data: [] } })),
+      homeService.getSpecial().catch(() => ({ results: { data: [] } })),
+      homeService.getTop10().catch(() => ({ results: { today: [], week: [], month: [] } })),
+    ]);
+
+    const d = unwrap<any>(homeRes);
+    const sections = d || {};
+    const top10Raw = unwrap<any>(top10Res);
+
+    const spotlight = (sections.spotlights || sections.spotlight || []).map(mapSpotlight);
+    const trending = (sections.trending || unwrap<any>(trendingRes) || []).map(mapAnimeItem);
+    const top10: Top10Animes = {
+      today: (top10Raw.today || []).map(mapAnimeItem),
+      week: (top10Raw.week || []).map(mapAnimeItem),
+      month: (top10Raw.month || []).map(mapAnimeItem),
+    };
+
+    function extractData(res: any) {
+      const u = unwrap<any>(res);
+      const arr = u?.data || u;
+      return Array.isArray(arr) ? arr.map(mapAnimeItem) : [];
+    }
+
+    return {
+      spotlightAnimes: spotlight,
+      trendingAnimes: trending,
+      latestEpisodeAnimes: extractData(newlyRes).slice(0, 10),
+      topUpcomingAnimes: [] as TopUpcomingAnime[],
+      top10Animes: top10,
+      topAiringAnimes: (sections.topAiring || []).map(mapAnimeItem),
+      mostPopularAnimes: extractData(popularRes),
+      mostFavoriteAnimes: extractData(favRes),
+      latestCompletedAnimes: extractData(newReleaseRes),
+      genres: sections.genres || [],
+      trendingNow: trending,
+      topAiring: (sections.topAiring || []).map(mapAnimeItem),
+      popularThisWeek: extractData(popularRes),
+      mostFavorite: extractData(popularRes),
+      topMovies: extractData(movieRes),
+      tvSeries: extractData(tvRes),
+      ovaList: extractData(ovaRes),
+      onaList: extractData(onaRes),
+      specialList: extractData(specialRes),
+      subbedAnime: [],
+      dubbedAnime: [],
+    } as IAnimeData & Record<string, any>;
+  } catch (e) {
+    console.error("getHomeData error:", e);
+    throw e;
+  }
+}
+
+async function getInfo(idOrSlug: string): Promise<IAnimeDetails> {
+  const res = await animeService.getById(idOrSlug);
+  const a = unwrap<any>(res);
+  if (!a || !a.title) throw new Error("Anime not found");
+
+  const poster = a.poster || "";
+  const banner = a.backgroundImage || "";
+  const genres = Array.isArray(a.genres) ? a.genres : [];
+
+  return {
+    anime: {
+      info: {
+        id: idOrSlug,
+        anilistId: a.animeId || 0,
+        malId: parseInt(a.malScore) || 0,
+        name: a.title || "Unknown",
+        poster, banner,
+        description: a.synopsis || "",
+        stats: {
+          rating: a.malScore || "",
+          quality: "HD",
+          episodes: { sub: 0, dub: 0 },
+          type: typeof a.type === "string" ? a.type : a.type?.name || "TV",
+          duration: a.duration || "",
         },
-        seasons: [],
-        mostPopularAnimes: [],
-        relatedAnimes: [],
-        recommendedAnimes: [],
-      };
-    }
-    return aniverse.getInfo(id);
-  },
+        promotionalVideos: [],
+        charactersVoiceActors: [],
+      },
+      moreInfo: {
+        japanese: a.japaneseTitle || "",
+        synonyms: a.altNames || "",
+        aired: a.aired || "",
+        premiered: a.premiered || "",
+        duration: a.duration || "",
+        status: typeof a.status === "string" ? a.status : a.status?.name || "Unknown",
+        malscore: a.malScore || "",
+        genres: genres.map((g: any) => typeof g === "string" ? g : g.name || "").filter(Boolean),
+        studios: Array.isArray(a.studios) ? a.studios.join(", ") : (typeof a.studios === "string" ? a.studios : ""),
+        producers: Array.isArray(a.producers) ? a.producers.map((p: any) => typeof p === "string" ? p : p.name || "").filter(Boolean) : (typeof a.producers === "string" ? [a.producers] : []),
+      },
+    },
+    seasons: [{ id: idOrSlug, name: a.title || "Unknown", title: a.title || "Unknown", poster, isCurrent: true }],
+    mostPopularAnimes: [],
+    relatedAnimes: [],
+    recommendedAnimes: [],
+  };
+}
 
-  async search(query: string, page: number = 1, _filters?: Record<string, any>) {
-    return aniverse.search(query, page);
-  },
+async function searchAnime(query: string, page = 1): Promise<IAnimeSearch> {
+  try {
+    const res = await searchService.search(query, page);
+    const data = unwrap<any>(res);
+    const items = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
+    const pages = data?.totalPages || 1;
+    return {
+      animes: items.map(mapAnimeItem),
+      totalPages: pages,
+      currentPage: page,
+      hasNextPage: page < pages,
+    };
+  } catch {
+    return { animes: [], totalPages: 1, currentPage: page, hasNextPage: false };
+  }
+}
 
-  async getEpisodes(id: string) {
-    if (isMAL(id)) {
-      const EP_CACHE_KEY = `episodes:${id}`;
-      const fromCache = await getCached(EP_CACHE_KEY, 86400);
-      if (fromCache) return fromCache;
+async function searchSuggestions(query: string): Promise<ISuggestionAnime[]> {
+  try {
+    const res = await searchService.suggestion(query);
+    const items = unwrap<any[]>(res);
+    return (items || []).slice(0, 12).map((item: any) => ({
+      id: cleanSlug(item.slug) || item.id?.toString() || "",
+      name: item.title || item.name || "Unknown",
+      jname: item.japaneseTitle || "",
+      poster: item.poster || "",
+      episodes: { sub: item.sub ?? null, dub: null },
+      type: typeof item.type === "string" ? item.type : "",
+        rank: undefined,
+        moreInfo: [typeof item.type === "string" ? item.type : "", item.quality || "", ""].filter(Boolean),
+    }));
+  } catch {
+    return [];
+  }
+}
 
-      const preSeeded = getPreSeededEpisodeCount(id);
-      if (preSeeded !== null) {
-        const episodes: any[] = [];
-        for (let i = 1; i <= preSeeded; i++) {
-          episodes.push({ number: i, episodeId: `${id}-${i}`, title: `Episode ${i}`, isFiller: false });
-        }
-        const result = { totalEpisodes: preSeeded, episodes };
-        await setCache(EP_CACHE_KEY, result);
-        return result;
-      }
+async function getEpisodes(idOrSlug: string): Promise<IEpisodes> {
+  try {
+    const [detailRes, epRes] = await Promise.all([
+      animeService.getById(idOrSlug).catch(() => ({ results: {} })),
+      animeService.getEpisodes(idOrSlug),
+    ]);
+    const detail = unwrap<any>(detailRes);
+    const epData = unwrap<any>(epRes);
+    const rawEpisodes = epData?.episodes || (Array.isArray(epData) ? epData : []);
+    const episodes = Array.isArray(rawEpisodes) ? rawEpisodes : [];
+    return {
+      totalEpisodes: epData?.totalEpisodes || episodes.length,
+      episodes: episodes.map((ep: any) => ({
+        number: ep.episode_no || 0,
+        episodeId: ep.episode_no?.toString() || "0",
+        title: ep.title || `Episode ${ep.episode_no}`,
+        isFiller: false,
+        ani: "",
+        mal: "",
+        embed_id: ep.server_ids || "",
+        thumbnail: "",
+      })),
+      subCount: 0,
+      dubCount: 0,
+      anilistId: detail.animeId || 0,
+      malId: 0,
+    };
+  } catch {
+    return { totalEpisodes: 0, episodes: [], subCount: 0, dubCount: 0, anilistId: 0, malId: 0 };
+  }
+}
 
-      try {
-        const a = await getJikanInfo(id);
-        const total = a?.episodes || 0;
-        const episodes: any[] = [];
-        for (let i = 1; i <= total; i++) {
-          episodes.push({ number: i, episodeId: `${id}-${i}`, title: `Episode ${i}`, isFiller: false });
-        }
-        const result = { totalEpisodes: total, episodes };
-        await setCache(EP_CACHE_KEY, result);
-        return result;
-      } catch {
-        return { totalEpisodes: 0, episodes: [] };
-      }
-    }
-    return aniverse.getEpisodes(id);
-  },
-
-  async getEpisodeServers(episodeId: string) {
-    if (isMALEpsiode(episodeId)) {
-      const parsed = parseMALEpisode(episodeId);
-      return {
-        episodeId,
-        episodeNo: parsed?.ep || "1",
-        sub: [{ serverId: 1, serverName: "MegaPlay" }],
-        dub: [{ serverId: 2, serverName: "MegaPlay" }],
-        raw: [],
-      };
-    }
-    return aniverse.getEpisodeServers(episodeId);
-  },
-
-  async getEpisodeSources(episodeId: string, serverId?: number, _category?: string) {
-    if (isMALEpsiode(episodeId)) {
-      const parsed = parseMALEpisode(episodeId);
-      if (!parsed) {
-        return {
-          headers: { Referer: "" },
-          subtitles: [], intro: { start: 0, end: 0 }, outro: { start: 0, end: 0 },
-          sources: [{ url: "", type: "hls" }], anilistID: 0, malID: 0,
-        };
-      }
-      const category = _category || "sub";
-      const streamUrl = `${MEGAPLAY_BASE}/stream/mal/${parsed.malId}/${parsed.ep}/${category}`;
-      return {
-        headers: { Referer: MEGAPLAY_BASE },
-        subtitles: [], intro: { start: 0, end: 0 }, outro: { start: 0, end: 0 },
-        sources: [{ url: streamUrl, type: "hls" }],
-        anilistID: 0, malID: parseInt(parsed.malId, 10),
-      };
-    }
-    return aniverse.getEpisodeSources(episodeId, serverId);
-  },
-
-  async searchSuggestions(query: string) {
-    return aniverse.searchSuggestions(query);
-  },
-
-  async getEstimatedSchedule(_date?: string) {
-    return aniverse.getEstimatedSchedule();
-  },
+export const hianime = {
+  getHomePage: getHomeData,
+  getInfo,
+  search: searchAnime,
+  searchSuggestions,
+  getEpisodes,
+  getEstimatedSchedule: (date?: string) => scheduleService.getSchedules(date),
 };

@@ -1,6 +1,10 @@
 export interface IEpisodes {
   totalEpisodes: number;
   episodes: Episode[];
+  subCount?: number;
+  dubCount?: number;
+  anilistId?: number;
+  malId?: number;
 }
 
 export interface Episode {
@@ -8,6 +12,10 @@ export interface Episode {
   episodeId: string;
   number: number;
   isFiller: boolean;
+  ani?: string;
+  mal?: string;
+  embed_id?: string;
+  thumbnail?: string;
 }
 
 export interface IEpisodeSource {

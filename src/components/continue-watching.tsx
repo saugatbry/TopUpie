@@ -63,7 +63,7 @@ const ContinueWatching = (props: Props) => {
           id: anime.animeId,
           name: anime.animeTitle,
           poster: anime.thumbnail,
-          episode: anime.expand.watchHistory
+          episode: anime.expand?.watchHistory
             ? anime.expand.watchHistory.sort(
               (a, b) => b.episodeNumber - a.episodeNumber,
             )[0]

@@ -8,9 +8,7 @@ const searchAnime = async (q: string) => {
     return;
   }
   const res = await api.get("/api/search/suggestion", {
-    params: {
-      q: q,
-    },
+    params: { q },
   });
 
   return res.data.data as ISuggestionAnime[];

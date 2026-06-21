@@ -61,7 +61,7 @@ const EpisodePlaylist = ({
 
   useEffect(() => {
     if (
-      (!episodeId || !episodeId.includes("ep")) &&
+      !episodeId &&
       !!episodes &&
       !!episodes.episodes.length
     ) {

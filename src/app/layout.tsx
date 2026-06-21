@@ -95,8 +95,6 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://www.googletagmanager.com" />
-        <link rel="dns-prefetch" href="https://api.jikan.moe" />
-        <link rel="dns-prefetch" href="https://cdn.myanimelist.net" />
         <link rel="dns-prefetch" href="https://i.ibb.co" />
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-C5ES6E3GFP"
@@ -115,6 +113,7 @@ export default function RootLayout({
       </head>
       <body
         className={`${geistSans.className} antialiased max-w-[100vw] overflow-x-hidden`}
+        suppressHydrationWarning
       >
         <ThemeProvider
           attribute="class"

@@ -4,7 +4,6 @@ import { IAuthStore } from "@/store/auth-store";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import Link from "next/link";
 import { User, LogOut } from "lucide-react";
-import { pb } from "@/lib/pocketbase";
 
 type Props = {
   auth: IAuthStore;
@@ -20,8 +19,6 @@ function NavbarAvatar({ auth }: Props) {
           <Avatar
             username={auth.auth.username}
             url={auth.auth.avatar}
-            id={auth.auth.id}
-            collectionID={auth.auth.collectionId}
           />
         </PopoverTrigger>
         <PopoverContent className="bg-black bg-opacity-50 backdrop-blur-sm w-[200px] mt-4 mr-4 text-sm flex flex-col space-y-2">
@@ -42,11 +39,8 @@ function NavbarAvatar({ auth }: Props) {
           </div>
 
           <div
-            className="flex flex-row space-x-2 items-center cursor-pointer "
-            onClick={() => {
-              pb.authStore.clear();
-              auth.clearAuth();
-            }}
+            className="flex flex-row space-x-2 items-center cursor-pointer"
+            onClick={() => auth.clearAuth()}
           >
             <LogOut size="20" />
             <p>Logout</p>

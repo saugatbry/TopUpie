@@ -9,21 +9,30 @@ import { Separator } from "./ui/separator";
 
 import { nightTokyo } from "@/utils/fonts";
 import { ROUTES } from "@/constants/routes";
-import React, { ReactNode, useState } from "react";
+import React, { ReactNode, useRef, useState } from "react";
 
 import SearchBar from "./search-bar";
-import { MenuIcon, SearchIcon, X } from "lucide-react";
+import { ChevronDown, MenuIcon, SearchIcon, X } from "lucide-react";
 import useScrollPosition from "@/hooks/use-scroll-position";
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from "./ui/sheet";
 import LoginPopoverButton from "./login-popover-button";
 import { useAuthStore } from "@/store/auth-store";
-import { useProviderStore } from "@/store/provider-store";
 import NavbarAvatar from "./navbar-avatar";
 
-const menuItems: Array<{ title: string; href?: string }> = [
+const menuItems: Array<{ title: string; href?: string; children?: Array<{ title: string; href: string }> }> = [
   {
     title: "Anime",
     href: ROUTES.SEARCH,
+    children: [
+      { title: "Trending", href: "/anime/trending" },
+      { title: "Top Anime", href: "/anime/top" },
+      { title: "Movies", href: "/anime/movies" },
+      { title: "Schedule", href: "/schedule" },
+      { title: "Discover", href: "/discover" },
+      { title: "A-Z List", href: "/anime/az-list/a" },
+      { title: "Characters", href: "/characters" },
+      { title: "People / Staff", href: "/people" },
+    ],
   },
   {
     title: "Manga",
@@ -33,7 +42,6 @@ const menuItems: Array<{ title: string; href?: string }> = [
 
 const NavBar = () => {
   const auth = useAuthStore();
-  const { provider, setProvider } = useProviderStore();
   const { y } = useScrollPosition();
   const isHeaderSticky = y > 0;
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
@@ -64,24 +72,17 @@ const NavBar = () => {
             TopUpie Anime
           </span>
         </Link>
-        <button
-          onClick={() => setProvider(provider === "subdub" ? "hindi" : "subdub")}
-          className={cn([
-            "text-xs font-bold px-2 py-1 rounded-full border transition-colors shrink-0",
-            provider === "hindi"
-              ? "border-orange-500 text-orange-400 bg-orange-500/10"
-              : "border-pink-500 text-pink-400 bg-pink-500/10",
-          ])}
-        >
-          {provider === "subdub" ? "Sub/Dub" : "Hindi"}
-        </button>
 
-        <div className="hidden lg:flex items-center gap-10 ml-20">
-          {menuItems.map((menu, idx) => (
-            <Link href={menu.href || "#"} key={idx}>
-              {menu.title}
-            </Link>
-          ))}
+        <div className="hidden lg:flex items-center gap-6 ml-20">
+          {menuItems.map((menu, idx) =>
+            menu.children ? (
+              <NavDropdown key={idx} menu={menu} />
+            ) : (
+              <Link href={menu.href || "#"} key={idx}>
+                {menu.title}
+              </Link>
+            )
+          )}
         </div>
         <div className="w-1/3 hidden lg:flex items-center gap-5">
           <SearchBar />
@@ -104,9 +105,45 @@ const NavBar = () => {
   );
 };
 
+const NavDropdown = ({ menu }: { menu: typeof menuItems[0] }) => {
+  const [open, setOpen] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => { clearTimeout(timeoutRef.current); setOpen(true); }}
+      onMouseLeave={() => { timeoutRef.current = setTimeout(() => setOpen(false), 150); }}
+    >
+      <button className="flex items-center gap-1 cursor-default">
+        {menu.title}
+        <ChevronDown className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div
+          className="absolute top-full left-0 mt-2 w-48 rounded-xl bg-slate-900 border border-slate-800 shadow-xl py-2 z-50"
+          onMouseEnter={() => { clearTimeout(timeoutRef.current); setOpen(true); }}
+          onMouseLeave={() => { timeoutRef.current = setTimeout(() => setOpen(false), 150); }}
+        >
+          {menu.children?.map((child, i) => (
+            <Link
+              key={i}
+              href={child.href}
+              className="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-slate-800 transition-colors"
+              onClick={() => setOpen(false)}
+            >
+              {child.title}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const MobileMenuSheet = ({ trigger }: { trigger: ReactNode }) => {
   const [open, setOpen] = useState<boolean>(false);
-  const { provider, setProvider } = useProviderStore();
+  const [expanded, setExpanded] = useState<string | null>(null);
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger>{trigger}</SheetTrigger>
@@ -120,30 +157,40 @@ const MobileMenuSheet = ({ trigger }: { trigger: ReactNode }) => {
           <SheetClose className="absolute top-0 right-0" aria-label="Close menu">
             <X />
           </SheetClose>
-          <div className="flex flex-col gap-5 mt-10">
+          <div className="flex flex-col gap-2 mt-10">
             {menuItems.map((menu, idx) => (
-              <Link
-                href={menu.href || "#"}
-                key={idx}
-                onClick={() => setOpen(false)}
-              >
-                {menu.title}
-              </Link>
+              <div key={idx}>
+                {menu.children ? (
+                  <>
+                    <button
+                      onClick={() => setExpanded(expanded === menu.title ? null : menu.title)}
+                      className="flex items-center justify-between w-full py-2 text-left"
+                    >
+                      {menu.title}
+                      <ChevronDown className={`h-4 w-4 transition-transform ${expanded === menu.title ? "rotate-180" : ""}`} />
+                    </button>
+                    {expanded === menu.title && menu.children.map((child, ci) => (
+                      <Link
+                        key={ci}
+                        href={child.href}
+                        className="block py-2 pl-4 text-sm text-gray-400"
+                        onClick={() => setOpen(false)}
+                      >
+                        {child.title}
+                      </Link>
+                    ))}
+                  </>
+                ) : (
+                  <Link
+                    href={menu.href || "#"}
+                    onClick={() => setOpen(false)}
+                    className="block py-2"
+                  >
+                    {menu.title}
+                  </Link>
+                )}
+              </div>
             ))}
-            <button
-              onClick={() => {
-                setProvider(provider === "subdub" ? "hindi" : "subdub");
-                setOpen(false);
-              }}
-              className={cn([
-                "text-sm font-bold px-3 py-1.5 rounded-full border transition-colors w-fit",
-                provider === "hindi"
-                  ? "border-orange-500 text-orange-400 bg-orange-500/10"
-                  : "border-pink-500 text-pink-400 bg-pink-500/10",
-              ])}
-            >
-              {provider === "subdub" ? "Sub/Dub" : "Hindi"}
-            </button>
             <Separator />
             <SearchBar onAnimeClick={() => setOpen(false)} />
           </div>

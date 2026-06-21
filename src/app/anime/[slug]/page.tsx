@@ -9,8 +9,6 @@ import AnimeCard from "@/components/anime-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import WatchButton from "@/components/watch-button";
-import { useProviderStore } from "@/store/provider-store";
-import { useGetMalId } from "@/query/get-mal-id";
 import { IAnime } from "@/types/anime";
 import AnimeCarousel from "@/components/anime-carousel";
 import AnimeEpisodes from "@/components/anime-episodes";
@@ -67,7 +65,6 @@ const Page = () => {
   const { slug } = useParams();
   const { data: anime, isLoading } = useGetAnimeDetails(slug as string);
   const { auth } = useAuthStore();
-  const provider = useProviderStore((s) => s.provider);
   const { bookmarks, createOrUpdateBookMark } = useBookMarks({
     animeID: slug as string,
     page: 1,
@@ -85,8 +82,6 @@ const Page = () => {
   const { data: banner, isLoading: bannerLoading } = useGetAnimeBanner(
     malId ?? 0,
   );
-  const animeTitle = anime?.anime?.info?.name;
-  const { data: searchMalId } = useGetMalId(animeTitle ?? "");
 
   const handleSelect = async (value: string) => {
     if (!auth || !anime) return;
@@ -172,7 +167,7 @@ const Page = () => {
               {anime.anime.info.name}
             </h1>
             <div className="flex items-center gap-5">
-              <WatchButton provider={provider} malId={provider === 'subdub' && searchMalId ? String(searchMalId) : null} />
+              <WatchButton />
               {auth && (
                 <Select
                   placeholder="Add to list"
@@ -232,7 +227,7 @@ const Page = () => {
                 <span>{anime.anime.info.stats.rating}</span>
 
                 <h3>Genres</h3>
-                <span>{anime.anime.moreInfo.genres.join(", ")}</span>
+                <span>{anime.anime.moreInfo.genres?.join(", ") || ""}</span>
 
                 <h3>Type</h3>
                 <span>{anime.anime.info.stats.type}</span>

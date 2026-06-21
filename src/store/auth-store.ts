@@ -7,8 +7,6 @@ export type IAuth = {
   avatar: string;
   email: string;
   username: string;
-  collectionId: string;
-  collectionName: string;
   autoSkip: boolean;
 };
 

@@ -4,6 +4,20 @@ export interface IAnimeDetails {
   mostPopularAnimes: MostPopularAnime[];
   relatedAnimes: RelatedAnime[];
   recommendedAnimes: RecommendedAnime[];
+  staff?: StaffMember[];
+  externalLinks?: ExternalLink[];
+}
+
+export interface StaffMember {
+  id: string;
+  name: string;
+  image: string;
+  role: string;
+}
+
+export interface ExternalLink {
+  url: string;
+  site: string;
 }
 
 export interface Season {

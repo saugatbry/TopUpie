@@ -97,7 +97,7 @@ const SearchResults = () => {
       sort: "",
       genres: "",
     });
-    router.push('/search?q=""');
+    router.push(`/search?q=""`);
   };
 
   return (

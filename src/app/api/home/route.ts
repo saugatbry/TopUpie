@@ -1,13 +1,8 @@
 import { hianime } from "@/lib/hianime";
-import { aniverse } from "@/lib/aniverse";
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const provider = searchParams.get("provider") || "subdub";
-    const data = provider === "hindi"
-      ? await aniverse.getHomePage()
-      : await hianime.getHomePage();
+    const data = await hianime.getHomePage();
     return Response.json({ data });
   } catch (err) {
     console.log(err);

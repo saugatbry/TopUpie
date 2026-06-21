@@ -17,7 +17,7 @@ export const useAnimeSearchParams = (): SearchAnimeParams => {
       season: get("season"),
       language: get("language"),
       sort: get("sort"),
-      genres: get("genres"),
-    };
+    genres: get("genres"),
+  };
   }, [searchParams]);
 };

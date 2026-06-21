@@ -23,6 +23,7 @@ import { IAnime, LatestCompletedAnime, SpotlightAnime } from "@/types/anime";
 
 export default function Home() {
   const { data, isLoading, isError } = useGetHomePageData();
+  const d = data as any;
 
   if (isError) {
     return (
@@ -76,6 +77,30 @@ export default function Home() {
           <AnimeSections
             title={"Trending Anime"}
             trendingAnime={(data?.trendingAnimes ?? []) as IAnime[]}
+            loading={isLoading}
+          />
+
+          <AnimeSections
+            title={"Top Airing"}
+            trendingAnime={(d?.topAiring ?? data?.topAiringAnimes ?? []) as IAnime[]}
+            loading={isLoading}
+          />
+
+          <AnimeSections
+            title={"Top Movies"}
+            trendingAnime={(d?.topMovies ?? []) as IAnime[]}
+            loading={isLoading}
+          />
+
+          <AnimeSections
+            title={"Subbed Anime"}
+            trendingAnime={(d?.subbedAnime ?? []) as IAnime[]}
+            loading={isLoading}
+          />
+
+          <AnimeSections
+            title={"Dubbed Anime"}
+            trendingAnime={(d?.dubbedAnime ?? []) as IAnime[]}
             loading={isLoading}
           />
 

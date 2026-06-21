@@ -39,8 +39,6 @@ function LoginPopoverButton() {
         email: result.user.email,
         username: result.user.username,
         avatar: result.user.avatar,
-        collectionId: "",
-        collectionName: "",
         autoSkip: false,
       });
     } else {
