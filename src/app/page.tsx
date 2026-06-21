@@ -92,25 +92,7 @@ export default function Home() {
             loading={isLoading}
           />
 
-          <AnimeSections
-            title={"Subbed Anime"}
-            trendingAnime={(d?.subbedAnime ?? []) as IAnime[]}
-            loading={isLoading}
-          />
-
-          <AnimeSections
-            title={"Dubbed Anime"}
-            trendingAnime={(d?.dubbedAnime ?? []) as IAnime[]}
-            loading={isLoading}
-          />
-
           <AnimeSchedule />
-
-          <AnimeSections
-            title={"Upcoming Animes"}
-            trendingAnime={(data?.topUpcomingAnimes ?? []) as IAnime[]}
-            loading={isLoading}
-          />
         </>
       )}
       {!isLoading && !hasData && (

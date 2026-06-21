@@ -41,18 +41,13 @@ function mapSpotlight(item: any) {
 
 async function getHomeData(): Promise<IAnimeData> {
   try {
-    const [homeRes, trendingRes, popularRes, favRes, newlyRes, newReleaseRes, movieRes, tvRes, ovaRes, onaRes, specialRes, top10Res] = await Promise.all([
+    const [homeRes, popularRes, favRes, newlyRes, newReleaseRes, movieRes, top10Res] = await Promise.all([
       homeService.getHome(),
-      homeService.getTrending().catch(() => ({ results: [] })),
       homeService.getMostPopular(1).catch(() => ({ results: { data: [] } })),
       homeService.getMostPopular(2).catch(() => ({ results: { data: [] } })),
       homeService.getRecentlyAdded(1).catch(() => ({ results: { data: [] } })),
       homeService.getRecentlyUpdated(1).catch(() => ({ results: { data: [] } })),
       homeService.getMovies().catch(() => ({ results: { data: [] } })),
-      homeService.getTV().catch(() => ({ results: { data: [] } })),
-      homeService.getOVA().catch(() => ({ results: { data: [] } })),
-      homeService.getONA().catch(() => ({ results: { data: [] } })),
-      homeService.getSpecial().catch(() => ({ results: { data: [] } })),
       homeService.getTop10().catch(() => ({ results: { today: [], week: [], month: [] } })),
     ]);
 
@@ -61,7 +56,7 @@ async function getHomeData(): Promise<IAnimeData> {
     const top10Raw = unwrap<any>(top10Res);
 
     const spotlight = (sections.spotlights || sections.spotlight || []).map(mapSpotlight);
-    const trending = (sections.trending || unwrap<any>(trendingRes) || []).map(mapAnimeItem);
+    const trending = (sections.trending || []).map(mapAnimeItem);
     const top10: Top10Animes = {
       today: (top10Raw.today || []).map(mapAnimeItem),
       week: (top10Raw.week || []).map(mapAnimeItem),
@@ -90,12 +85,6 @@ async function getHomeData(): Promise<IAnimeData> {
       popularThisWeek: extractData(popularRes),
       mostFavorite: extractData(popularRes),
       topMovies: extractData(movieRes),
-      tvSeries: extractData(tvRes),
-      ovaList: extractData(ovaRes),
-      onaList: extractData(onaRes),
-      specialList: extractData(specialRes),
-      subbedAnime: [],
-      dubbedAnime: [],
     } as IAnimeData & Record<string, any>;
   } catch (e) {
     console.error("getHomeData error:", e);

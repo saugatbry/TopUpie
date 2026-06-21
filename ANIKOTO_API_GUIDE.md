@@ -1,6 +1,6 @@
 # AniKotoTV API Integration Guide
 
-Base URL: `https://anikototvapi.vercel.app/api`
+Base URL: `https://anikotoapi-ruby.vercel.app/api
 
 All endpoints return JSON in the format:
 ```json
