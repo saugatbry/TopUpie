@@ -27,8 +27,11 @@ export const proxyPeopleService = {
 };
 
 export const proxyScheduleService = {
-  getSchedules: (date?: string) =>
-    proxyGet(`/schedule${date ? `?date=${date}` : ""}`),
+  getSchedules: async (date?: string) => {
+    const qs = date ? `?date=${date}` : "";
+    const res = await api.get(`/api/schedule${qs}`);
+    return res.data;
+  },
 };
 
 export const proxyMetadataService = {
