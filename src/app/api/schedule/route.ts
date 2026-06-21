@@ -10,7 +10,7 @@ function hashDay(slug: string): number {
   return Math.abs(hash) % 7;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const firstRes = await fetch(`${ANIME_API}/status/currently-airing?page=1`, {
       signal: AbortSignal.timeout(15000),
@@ -35,6 +35,12 @@ export async function GET() {
       }
     }
 
+    const url = new URL(request.url);
+    const dateParam = url.searchParams.get("date");
+    const targetDay = dateParam
+      ? DAYS[new Date(dateParam).getDay()]
+      : null;
+
     const items = allAnime.map((anime) => {
       const cleanSlug = anime.slug?.split("/")[0] || anime.slug || String(anime.animeId || "");
       const dayIndex = hashDay(cleanSlug);
@@ -42,6 +48,7 @@ export async function GET() {
         id: cleanSlug,
         name: anime.title || anime.japaneseTitle || "Unknown",
         jname: anime.japaneseTitle || "",
+        day: DAYS[dayIndex],
         airingDay: DAYS[dayIndex],
         title: anime.title || anime.japaneseTitle || "Unknown",
         time: "",
@@ -56,7 +63,11 @@ export async function GET() {
       };
     });
 
-    return Response.json({ data: { scheduledAnimes: items } });
+    const filtered = targetDay
+      ? items.filter((item) => item.airingDay === targetDay)
+      : items;
+
+    return Response.json({ data: { scheduledAnimes: filtered } });
   } catch {
     return Response.json({ data: { scheduledAnimes: [] } });
   }
