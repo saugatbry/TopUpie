@@ -18,7 +18,7 @@ export default function SchedulePage() {
     setLoading(true);
     scheduleService.getSchedules()
       .then((res) => {
-        const data = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+        const data = res?.scheduledAnimes ?? res?.data?.scheduledAnimes ?? [];
         setSchedules(data);
       })
       .catch(() => {})

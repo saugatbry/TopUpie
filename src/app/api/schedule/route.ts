@@ -15,7 +15,7 @@ export async function GET() {
     const firstRes = await fetch(`${ANIME_API}/status/currently-airing?page=1`, {
       signal: AbortSignal.timeout(15000),
     });
-    if (!firstRes.ok) return Response.json([], { status: 200 });
+    if (!firstRes.ok) return Response.json({ data: { scheduledAnimes: [] } });
     const firstData = await firstRes.json();
     const totalPages: number = firstData?.results?.totalPages || 0;
     const allAnime: any[] = [...(firstData?.results?.data || [])];
@@ -39,21 +39,25 @@ export async function GET() {
       const cleanSlug = anime.slug?.split("/")[0] || anime.slug || String(anime.animeId || "");
       const dayIndex = hashDay(cleanSlug);
       return {
+        id: cleanSlug,
+        name: anime.title || anime.japaneseTitle || "Unknown",
+        jname: anime.japaneseTitle || "",
         airingDay: DAYS[dayIndex],
         title: anime.title || anime.japaneseTitle || "Unknown",
-        jname: anime.japaneseTitle || "",
         time: "",
+        airingTime: "",
+        airingTimestamp: 0,
+        secondsUntilAiring: 0,
         episode: anime.sub || 0,
         episodeNumber: anime.sub || 0,
         type: anime.type || "",
         slug: cleanSlug,
-        id: anime.animeId,
         poster: anime.poster,
       };
     });
 
-    return Response.json(items);
+    return Response.json({ data: { scheduledAnimes: items } });
   } catch {
-    return Response.json([], { status: 200 });
+    return Response.json({ data: { scheduledAnimes: [] } });
   }
 }
