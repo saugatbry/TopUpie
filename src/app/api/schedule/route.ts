@@ -67,7 +67,9 @@ export async function GET(request: Request) {
       ? items.filter((item) => item.airingDay === targetDay)
       : items;
 
-    return Response.json({ data: { scheduledAnimes: filtered } });
+    return Response.json({ data: { scheduledAnimes: filtered } }, {
+      headers: { "Cache-Control": "no-store, max-age=0" },
+    });
   } catch {
     return Response.json({ data: { scheduledAnimes: [] } });
   }
