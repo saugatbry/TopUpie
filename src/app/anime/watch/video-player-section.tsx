@@ -22,7 +22,6 @@ const VideoPlayerSection = () => {
 
   const { data: episodesData } = useGetAllEpisodes(animeId);
 
-  const [directUrl, setDirectUrl] = useState<string>("");
   const [streamUrl, setStreamUrl] = useState<string>("");
   const [loadingStream, setLoadingStream] = useState(false);
   const [streamError, setStreamError] = useState("");
@@ -65,14 +64,12 @@ const VideoPlayerSection = () => {
     if (!svId) {
       setStreamError("No stream data available");
       setStreamUrl("");
-      setDirectUrl("");
       return;
     }
 
     setLoadingStream(true);
     setStreamError("");
     setStreamUrl("");
-    setDirectUrl("");
 
     try {
       const serverRes = await api.get(
@@ -98,8 +95,7 @@ const VideoPlayerSection = () => {
       const streamData = streamRes.data?.results || streamRes.data || streamRes;
       const url = streamData?.url;
       if (url) {
-        setDirectUrl(url);
-        setStreamUrl(`/api/stream-proxy?id=${encodeURIComponent(match.link_id)}`);
+        setStreamUrl(url);
       } else {
         setStreamError("Stream URL unavailable");
       }
@@ -121,15 +117,12 @@ const VideoPlayerSection = () => {
       setLoadingStream(true);
       setStreamError("");
       setStreamUrl("");
-      setDirectUrl("");
       setSelectedServer(name);
       api.get(`${PROXY_BASE}/stream?id=${encodeURIComponent(sv.link_id)}`)
         .then((res) => {
           const data = res.data?.results || res.data || res;
-          if (data?.url) {
-            setDirectUrl(data.url);
-            setStreamUrl(`/api/stream-proxy?id=${encodeURIComponent(sv.link_id)}`);
-          } else setStreamError("Stream URL unavailable");
+          if (data?.url) setStreamUrl(data.url);
+          else setStreamError("Stream URL unavailable");
         })
         .catch(() => setStreamError("Failed to load stream"))
         .finally(() => setLoadingStream(false));
@@ -214,7 +207,6 @@ const VideoPlayerSection = () => {
               height="100%"
               allow="autoplay; encrypted-media; fullscreen"
               allowFullScreen
-              referrerPolicy="no-referrer"
             ></iframe>
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -226,9 +218,9 @@ const VideoPlayerSection = () => {
               ) : (
                 <div className="text-center">
                   <p>{streamError || "Player unavailable"}</p>
-                  {directUrl && (
+                  {streamUrl && (
                     <a
-                      href={directUrl}
+                      href={streamUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[#e9376b] hover:underline mt-2 inline-block"
@@ -310,9 +302,9 @@ const VideoPlayerSection = () => {
 
           <div className="flex-1" />
 
-          {directUrl && (
+          {isStreamReady && (
             <a
-              href={directUrl}
+              href={streamUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center px-3 py-1.5 text-xs rounded bg-slate-700 text-gray-300 hover:bg-slate-600 transition-colors"
