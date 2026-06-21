@@ -214,7 +214,6 @@ const VideoPlayerSection = () => {
               height="100%"
               allow="autoplay; encrypted-media; fullscreen"
               allowFullScreen
-              sandbox="allow-scripts allow-same-origin allow-forms"
               referrerPolicy="no-referrer"
             ></iframe>
           ) : (
